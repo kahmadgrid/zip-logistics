@@ -2,6 +2,7 @@ package com.logistics.smartlogistics.service;
 
 import com.logistics.smartlogistics.dto.TrackingDtos;
 import com.logistics.smartlogistics.entity.DeliveryOrder;
+import com.logistics.smartlogistics.entity.DriverProfile;
 import com.logistics.smartlogistics.entity.TrackingLog;
 import com.logistics.smartlogistics.repository.DeliveryOrderRepository;
 import com.logistics.smartlogistics.repository.TrackingLogRepository;
@@ -40,6 +41,15 @@ public class TrackingService {
         messagingTemplate.convertAndSend("/topic/tracking/" + orderId,
                 new TrackingDtos.TrackingUpdate(orderId, req.latitude(), req.longitude(), req.status()));
         return saved;
+    }
+
+    public TrackingLog logLocationForDriver(Long orderId, TrackingDtos.LocationUpdateRequest req, DriverProfile driver) {
+        DeliveryOrder order = deliveryOrderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+        if (order.getDriver() == null || order.getDriver().getId() == null || !order.getDriver().getId().equals(driver.getId())) {
+            throw new IllegalArgumentException("Order not assigned to this driver");
+        }
+        return logLocation(orderId, req);
     }
 
     public List<TrackingLog> getOrderTimeline(Long orderId) {

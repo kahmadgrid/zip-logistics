@@ -14,7 +14,12 @@ public class BookingDtos {
             @NotBlank String dropAddress,
             @NotBlank String pickupZone,
             @NotBlank String dropZone,
-            boolean priority
+            @NotBlank String receiverName,
+            @NotBlank String receiverMobile,
+            @NotNull Double weightKg,
+            @NotNull Double lengthCm,
+            @NotNull Double breadthCm,
+            @NotNull Double heightCm
     ) {
     }
 

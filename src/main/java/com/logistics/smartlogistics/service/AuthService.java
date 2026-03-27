@@ -32,8 +32,12 @@ public class AuthService {
         appUserRepository.findByEmail(request.email()).ifPresent(u -> {
             throw new IllegalArgumentException("Email already exists");
         });
+        appUserRepository.findByMobile(request.mobile()).ifPresent(u -> {
+            throw new IllegalArgumentException("Mobile already exists");
+        });
         AppUser user = new AppUser();
         user.setEmail(request.email());
+        user.setMobile(request.mobile());
         user.setPassword(passwordEncoder.encode(request.password()));
         user.setFullName(request.fullName());
         user.setRole(request.role() == null ? Role.ROLE_USER : request.role());
@@ -50,10 +54,11 @@ public class AuthService {
 
     public AuthDtos.AuthResponse login(AuthDtos.LoginRequest request) {
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password())
+                new UsernamePasswordAuthenticationToken(request.emailOrMobile(), request.password())
         );
-        AppUser user = appUserRepository.findByEmail(request.email())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        AppUser user = appUserRepository.findByEmail(request.emailOrMobile())
+                .orElseGet(() -> appUserRepository.findByMobile(request.emailOrMobile())
+                        .orElseThrow(() -> new IllegalArgumentException("User not found")));
         String token = jwtService.generateToken(
                 org.springframework.security.core.userdetails.User.withUsername(user.getEmail())
                         .password(user.getPassword())

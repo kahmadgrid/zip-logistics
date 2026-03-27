@@ -11,11 +11,15 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "tracking_logs")
+@Getter
+@Setter
 public class TrackingLog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,44 +41,4 @@ public class TrackingLog {
 
     @Column(nullable = false)
     private LocalDateTime recordedAt = LocalDateTime.now();
-
-    public Long getId() {
-        return id;
-    }
-
-    public DeliveryOrder getOrder() {
-        return order;
-    }
-
-    public void setOrder(DeliveryOrder order) {
-        this.order = order;
-    }
-
-    public Double getLatitude() {
-        return latitude;
-    }
-
-    public void setLatitude(Double latitude) {
-        this.latitude = latitude;
-    }
-
-    public Double getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(Double longitude) {
-        this.longitude = longitude;
-    }
-
-    public DeliveryStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(DeliveryStatus status) {
-        this.status = status;
-    }
-
-    public LocalDateTime getRecordedAt() {
-        return recordedAt;
-    }
 }

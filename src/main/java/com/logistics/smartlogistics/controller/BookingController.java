@@ -5,15 +5,12 @@ import com.logistics.smartlogistics.entity.DeliveryOrder;
 import com.logistics.smartlogistics.service.BookingService;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@CrossOrigin(origins = "*")
 @RequestMapping("/api/bookings")
 public class BookingController {
     private final BookingService bookingService;

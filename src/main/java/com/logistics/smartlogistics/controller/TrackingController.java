@@ -4,16 +4,12 @@ import com.logistics.smartlogistics.dto.TrackingDtos;
 import com.logistics.smartlogistics.entity.TrackingLog;
 import com.logistics.smartlogistics.service.TrackingService;
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@CrossOrigin(origins = "*")
 @RequestMapping("/api/tracking")
 public class TrackingController {
     private final TrackingService trackingService;

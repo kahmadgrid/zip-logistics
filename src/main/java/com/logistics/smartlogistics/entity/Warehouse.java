@@ -6,9 +6,13 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "warehouses")
+@Getter
+@Setter
 public class Warehouse {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,58 +22,23 @@ public class Warehouse {
     private String code;
 
     @Column(nullable = false)
+    private String name;
+
+    @Column
     private String city;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String zone;
+
+    @Column(nullable = false)
+    private Double latitude;
+
+    @Column(nullable = false)
+    private Double longitude;
 
     @Column(nullable = false)
     private Integer capacity;
 
     @Column(nullable = false)
     private Integer currentLoad = 0;
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getZone() {
-        return zone;
-    }
-
-    public void setZone(String zone) {
-        this.zone = zone;
-    }
-
-    public Integer getCapacity() {
-        return capacity;
-    }
-
-    public void setCapacity(Integer capacity) {
-        this.capacity = capacity;
-    }
-
-    public Integer getCurrentLoad() {
-        return currentLoad;
-    }
-
-    public void setCurrentLoad(Integer currentLoad) {
-        this.currentLoad = currentLoad;
-    }
 }

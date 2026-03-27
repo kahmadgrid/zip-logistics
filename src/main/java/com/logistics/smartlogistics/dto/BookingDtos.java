@@ -1,83 +1,33 @@
 package com.logistics.smartlogistics.dto;
 
-import com.logistics.smartlogistics.enums.*;
-import jakarta.validation.constraints.*;
-import lombok.*;
+import com.logistics.smartlogistics.enums.DeliveryStatus;
+import com.logistics.smartlogistics.enums.DeliveryType;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 
 public class BookingDtos {
-
-    // 📥 REQUEST DTO
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class BookingRequest {
-
-        @NotNull
-        private DeliveryType deliveryType;
-
-        @NotBlank
-        private String pickupAddress;
-
-        @NotBlank
-        private String dropAddress;
-
-        @NotBlank
-        private String pickupZone;
-
-        @NotBlank
-        private String dropZone;
-
-        private boolean priority;
-
-        // 👤 Receiver Details
-        @NotBlank
-        private String receiverName;
-
-        @NotBlank
-        private String receiverMobile;
-
-        // 📦 Parcel Details
-        @NotNull
-        private Double weight; // in kg
-
-        @NotBlank
-        private String dimensions; // "10x5x3 cm"
-
-        // 🔥 Optional fields (very useful)
-        private boolean fragile;
-        private String instructions; // "Handle with care"
-
-        public boolean getPriority() {
-            return priority;
-        }
+    public record BookingRequest(
+            @NotNull DeliveryType deliveryType,
+            @NotBlank String pickupAddress,
+            @NotBlank String dropAddress,
+            @NotBlank String pickupZone,
+            @NotBlank String dropZone,
+            @NotBlank String receiverName,
+            @NotBlank String receiverMobile,
+            @NotNull Double weightKg,
+            @NotNull Double lengthCm,
+            @NotNull Double breadthCm,
+            @NotNull Double heightCm
+    ) {
     }
 
-    // 📤 RESPONSE DTO
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class BookingResponse {
-
-        private Long id;
-
-        private DeliveryType deliveryType;
-
-        private DeliveryStatus status;
-
-        private BigDecimal estimatedPrice;
-
-        // 📍 Coordinates
-        private Double pickupLat;
-        private Double pickupLng;
-
-        private Double dropLat;
-        private Double dropLng;
-
-        public BookingResponse(Long id, DeliveryType deliveryType, DeliveryStatus status, BigDecimal estimatedPrice) {
-        }
+    public record BookingResponse(
+            Long id,
+            DeliveryType deliveryType,
+            DeliveryStatus status,
+            BigDecimal estimatedPrice
+    ) {
     }
 }

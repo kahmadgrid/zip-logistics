@@ -23,7 +23,8 @@ public class AppUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         AppUser user = appUserRepository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+                .orElseGet(() -> appUserRepository.findByMobile(username)
+                        .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username)));
         return new User(user.getEmail(), user.getPassword(), user.isActive(), true, true, true,
                 List.of(new SimpleGrantedAuthority(user.getRole().name())));
     }

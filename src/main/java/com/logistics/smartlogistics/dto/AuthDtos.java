@@ -9,15 +9,15 @@ public class AuthDtos {
 
     public record RegisterRequest(
             @Email String email,
+            @NotBlank String mobile,
             @NotBlank String password,
             @NotBlank String fullName,
-            @NotNull Role role,
-            @NotNull String mobile
+            @NotNull Role role
     ) {
     }
 
     public record LoginRequest(
-            @Email String email,
+            @NotBlank String emailOrMobile,
             @NotBlank String password
     ) {
     }

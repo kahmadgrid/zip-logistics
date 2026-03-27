@@ -12,12 +12,16 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "delivery_orders")
+@Getter
+@Setter
 public class DeliveryOrder {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,12 +32,20 @@ public class DeliveryOrder {
     private AppUser customer;
 
     @ManyToOne
-    @JoinColumn(name = "driver_id")
-    private AppUser driver;
+    @JoinColumn(name = "driver_profile_id")
+    private DriverProfile driver;
 
     @ManyToOne
     @JoinColumn(name = "warehouse_id")
-    private Warehouse warehouse;
+    private Warehouse warehouse; // origin warehouse for inter-zone flows
+
+    @ManyToOne
+    @JoinColumn(name = "destination_warehouse_id")
+    private Warehouse destinationWarehouse; // destination warehouse for inter-zone/standard flows
+
+    @ManyToOne
+    @JoinColumn(name = "batch_id")
+    private Batch batch;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -56,107 +68,41 @@ public class DeliveryOrder {
     private String dropZone;
 
     @Column(nullable = false)
-    private boolean priority;
+    private String receiverName;
+
+    @Column(nullable = false)
+    private String receiverMobile;
+
+    @Column(nullable = false)
+    private Double weightKg;
+
+    @Column(nullable = false)
+    private Double lengthCm;
+
+    @Column(nullable = false)
+    private Double breadthCm;
+
+    @Column(nullable = false)
+    private Double heightCm;
+
+    @Column(nullable = false)
+    private Double pickupLatitude;
+
+    @Column(nullable = false)
+    private Double pickupLongitude;
+
+    @Column(nullable = false)
+    private Double dropLatitude;
+
+    @Column(nullable = false)
+    private Double dropLongitude;
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal estimatedPrice;
 
+    @Column
+    private Integer batchOrderIndex;
+
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
-
-    public Long getId() {
-        return id;
-    }
-
-    public AppUser getCustomer() {
-        return customer;
-    }
-
-    public void setCustomer(AppUser customer) {
-        this.customer = customer;
-    }
-
-    public AppUser getDriver() {
-        return driver;
-    }
-
-    public void setDriver(AppUser driver) {
-        this.driver = driver;
-    }
-
-    public Warehouse getWarehouse() {
-        return warehouse;
-    }
-
-    public void setWarehouse(Warehouse warehouse) {
-        this.warehouse = warehouse;
-    }
-
-    public DeliveryType getDeliveryType() {
-        return deliveryType;
-    }
-
-    public void setDeliveryType(DeliveryType deliveryType) {
-        this.deliveryType = deliveryType;
-    }
-
-    public DeliveryStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(DeliveryStatus status) {
-        this.status = status;
-    }
-
-    public String getPickupAddress() {
-        return pickupAddress;
-    }
-
-    public void setPickupAddress(String pickupAddress) {
-        this.pickupAddress = pickupAddress;
-    }
-
-    public String getDropAddress() {
-        return dropAddress;
-    }
-
-    public void setDropAddress(String dropAddress) {
-        this.dropAddress = dropAddress;
-    }
-
-    public String getPickupZone() {
-        return pickupZone;
-    }
-
-    public void setPickupZone(String pickupZone) {
-        this.pickupZone = pickupZone;
-    }
-
-    public String getDropZone() {
-        return dropZone;
-    }
-
-    public void setDropZone(String dropZone) {
-        this.dropZone = dropZone;
-    }
-
-    public boolean isPriority() {
-        return priority;
-    }
-
-    public void setPriority(boolean priority) {
-        this.priority = priority;
-    }
-
-    public BigDecimal getEstimatedPrice() {
-        return estimatedPrice;
-    }
-
-    public void setEstimatedPrice(BigDecimal estimatedPrice) {
-        this.estimatedPrice = estimatedPrice;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
 }

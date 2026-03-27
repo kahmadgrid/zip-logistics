@@ -1,27 +1,44 @@
 package com.logistics.smartlogistics.service;
 
-import com.logistics.smartlogistics.entity.AppUser;
 import com.logistics.smartlogistics.entity.DeliveryOrder;
-import com.logistics.smartlogistics.enums.Role;
-import com.logistics.smartlogistics.repository.AppUserRepository;
+import com.logistics.smartlogistics.entity.DriverProfile;
+import com.logistics.smartlogistics.repository.DriverProfileRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class MatchingEngineService {
 
-    private final AppUserRepository appUserRepository;
+    private final DriverProfileRepository driverProfileRepository;
 
-    public MatchingEngineService(AppUserRepository appUserRepository) {
-        this.appUserRepository = appUserRepository;
+    public MatchingEngineService(DriverProfileRepository driverProfileRepository) {
+        this.driverProfileRepository = driverProfileRepository;
     }
 
-    public Optional<AppUser> findBestDriver(DeliveryOrder order) {
-        // Phase 1 placeholder: replace with distance, rating and vehicle fit scoring.
-        List<AppUser> drivers = appUserRepository.findByRole(Role.ROLE_DRIVER);
-        return drivers.stream().min(Comparator.comparing(AppUser::getId));
+    public List<DriverProfile> rankAvailableDrivers(DeliveryOrder order) {
+        // In Zip-Logistics, drivers are restricted to the pickup zone.
+        // For cross-zone journeys, the same driver can still handle the order after warehouse transfer.
+        String zone = order.getPickupZone();
+
+        List<DriverProfile> candidates = driverProfileRepository
+                .findByCurrentZoneAndAvailability(zone, com.logistics.smartlogistics.enums.DriverAvailability.ONLINE);
+
+        if (candidates.isEmpty()) {
+            return List.of();
+        }
+
+        return candidates.stream()
+                .sorted(Comparator.comparingDouble(d -> score(order, d)))
+                .collect(Collectors.toList());
+    }
+
+    private double score(DeliveryOrder order, DriverProfile driver) {
+        // Placeholder heuristic: prefer closer drivers; slightly prefer higher rating.
+        double distanceKm = DistanceUtils.distanceKm(order.getPickupLatitude(), order.getPickupLongitude(),
+                driver.getCurrentLatitude(), driver.getCurrentLongitude());
+        return distanceKm / Math.max(0.1, driver.getRating());
     }
 }

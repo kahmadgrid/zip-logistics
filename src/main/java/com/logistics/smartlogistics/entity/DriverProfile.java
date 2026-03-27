@@ -8,9 +8,15 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "driver_profiles")
+@Getter
+@Setter
 public class DriverProfile {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,53 +32,20 @@ public class DriverProfile {
     @Column(nullable = false)
     private Double rating = 5.0;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Boolean available = true;
+    private com.logistics.smartlogistics.enums.DriverAvailability availability =
+            com.logistics.smartlogistics.enums.DriverAvailability.ONLINE;
 
-    @Column
+    @Column(nullable = false)
     private String currentZone;
 
-    public Long getId() {
-        return id;
-    }
+    @Column(nullable = false)
+    private Double currentLatitude = 0.0;
 
-    public AppUser getUser() {
-        return user;
-    }
+    @Column(nullable = false)
+    private Double currentLongitude = 0.0;
 
-    public void setUser(AppUser user) {
-        this.user = user;
-    }
-
-    public String getVehicleType() {
-        return vehicleType;
-    }
-
-    public void setVehicleType(String vehicleType) {
-        this.vehicleType = vehicleType;
-    }
-
-    public Double getRating() {
-        return rating;
-    }
-
-    public void setRating(Double rating) {
-        this.rating = rating;
-    }
-
-    public Boolean getAvailable() {
-        return available;
-    }
-
-    public void setAvailable(Boolean available) {
-        this.available = available;
-    }
-
-    public String getCurrentZone() {
-        return currentZone;
-    }
-
-    public void setCurrentZone(String currentZone) {
-        this.currentZone = currentZone;
-    }
+    @Column
+    private String vehicleNumber;
 }

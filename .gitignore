@@ -1,52 +1,138 @@
-# =========================
-# Build (Maven)
-# =========================
-/target/
+# ===============================
 
-# =========================
-# Logs
-# =========================
+# Java / Spring Boot
+
+# ===============================
+
+*.class
 *.log
+*.ctxt
 
-# =========================
-# IntelliJ
-# =========================
+# Package Files
+
+*.jar
+*.war
+*.ear
+
+# JVM crash logs
+
+hs_err_pid*
+replay_pid*
+
+# ===============================
+
+# Maven
+
+# ===============================
+
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+
+# ===============================
+
+# Gradle
+
+# ===============================
+
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# ===============================
+
+# IDEs
+
+# ===============================
+
+# IntelliJ IDEA
+
 .idea/
 *.iml
+*.iws
+*.ipr
+out/
 
-# =========================
-# OS files
-# =========================
+# Eclipse
+
+.project
+.classpath
+.settings/
+bin/
+
+# VS Code
+
+.vscode/
+
+# ===============================
+
+# OS Files
+
+# ===============================
+
 .DS_Store
 Thumbs.db
 
-# =========================
-# Environment & Secrets
-# =========================
-.env
-.env.*
+# ===============================
 
-# Spring config with secrets
-application.yml
+# Logs
+
+# ===============================
+
+logs/
+*.log
+
+# ===============================
+
+# Spring Boot
+.m2
+.idea
+# ===============================
+
 application.properties
+application.yml
 
-# Allow safe template files
-!application-example.yml
-!application-example.properties
+# If you want to include config, comment above and use profiles:
 
-# =========================
-# Docker secrets
-# =========================
+# application-*.properties
+
+# application-*.yml
+
+# ===============================
+
+# Environment Variables
+
+# ===============================
+
+.env
+package-lock.json
+# ===============================
+
+# Test Output
+
+# ===============================
+
+/test-output/
+/coverage/
+
+# ===============================
+
+# Docker
+
+# ===============================
+
 docker-compose.override.yml
-docker-compose.yml
-# =========================
-# Node (if any frontend)
-# =========================
-node_modules/
 
-# =========================
+# ===============================
+
 # Misc
-# =========================
-*.jar
 
-.m2/
+# ===============================
+
+*.swp
+*.swo

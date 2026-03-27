@@ -37,16 +37,16 @@ public class BookingService {
 
         DeliveryOrder order = new DeliveryOrder();
         order.setCustomer(customer);
-        order.setDeliveryType(request.deliveryType());
-        order.setPickupAddress(request.pickupAddress());
-        order.setDropAddress(request.dropAddress());
-        order.setPickupZone(request.pickupZone());
-        order.setDropZone(request.dropZone());
-        order.setPriority(request.priority());
+        order.setDeliveryType(request.getDeliveryType());
+        order.setPickupAddress(request.getPickupAddress());
+        order.setDropAddress(request.getDropAddress());
+        order.setPickupZone(request.getPickupZone());
+        order.setDropZone(request.getDropZone());
+        order.setPriority(request.getPriority());
         order.setEstimatedPrice(pricingEngineService.estimatePrice(request));
         order.setStatus(DeliveryStatus.CREATED);
 
-        if (request.deliveryType() == DeliveryType.EXPRESS && request.pickupZone().equals(request.dropZone())) {
+        if (request.getDeliveryType() == DeliveryType.EXPRESS && request.getPickupZone().equals(request.getDropZone())) {
             matchingEngineService.findBestDriver(order).ifPresent(order::setDriver);
             if (order.getDriver() != null) {
                 order.setStatus(DeliveryStatus.ASSIGNED);

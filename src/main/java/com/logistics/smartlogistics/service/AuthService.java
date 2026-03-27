@@ -36,6 +36,7 @@ public class AuthService {
         user.setEmail(request.email());
         user.setPassword(passwordEncoder.encode(request.password()));
         user.setFullName(request.fullName());
+        user.setMobile(request.mobile());
         user.setRole(request.role() == null ? Role.ROLE_USER : request.role());
         appUserRepository.save(user);
 

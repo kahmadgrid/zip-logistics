@@ -11,7 +11,8 @@ public class AuthDtos {
             @Email String email,
             @NotBlank String password,
             @NotBlank String fullName,
-            @NotNull Role role
+            @NotNull Role role,
+            @NotNull String mobile
     ) {
     }
 

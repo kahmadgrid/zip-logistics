@@ -4,6 +4,8 @@ import com.logistics.smartlogistics.dto.TrackingDtos;
 import com.logistics.smartlogistics.entity.TrackingLog;
 import com.logistics.smartlogistics.service.TrackingService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,4 +30,16 @@ public class TrackingController {
     public List<TrackingLog> timeline(@PathVariable Long orderId) {
         return trackingService.getOrderTimeline(orderId);
     }
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+
+    public void sendLocationUpdate(TrackingEvent event) {
+        messagingTemplate.convertAndSend(
+                "/topic/tracking/" + event.getOrderId(),
+                event
+        );
+    }
 }
+
+

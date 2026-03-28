@@ -28,4 +28,9 @@ public class AuthDtos {
             Role role
     ) {
     }
+
+    public record ChangePasswordRequest(
+            String currentPassword,
+            String newPassword
+    ) {}
 }

@@ -67,4 +67,20 @@ public class AuthService {
         );
         return new AuthDtos.AuthResponse(token, user.getEmail(), user.getRole());
     }
+
+    public void changePassword(String email, AuthDtos.ChangePasswordRequest request) {
+
+        AppUser user = appUserRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // 🔐 Verify current password
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+
+        // 🔐 Set new password (encoded)
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+
+        appUserRepository.save(user);
+    }
 }

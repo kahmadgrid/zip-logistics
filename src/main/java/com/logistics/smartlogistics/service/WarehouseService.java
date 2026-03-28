@@ -7,6 +7,7 @@ import com.logistics.smartlogistics.repository.WarehouseRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -22,6 +23,10 @@ public class WarehouseService {
         // Phase 1 placeholder: choose by zone and min load (zone -> single warehouse in this model).
         return warehouseRepository.findByZone(order.getPickupZone())
                 .filter(w -> w.getCurrentLoad() < w.getCapacity());
+    }
+
+    public List<Warehouse> getAllWarehouses() {
+        return warehouseRepository.findAll();
     }
 
     public Warehouse createWarehouse(WarehouseDtos.CreateWarehouseRequest request) {

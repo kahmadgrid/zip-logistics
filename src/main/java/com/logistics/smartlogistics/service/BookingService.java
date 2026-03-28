@@ -16,11 +16,11 @@ import java.util.Objects;
 
 @Service
 public class BookingService {
+
     private final DeliveryOrderRepository deliveryOrderRepository;
     private final AppUserRepository appUserRepository;
     private final PricingEngineService pricingEngineService;
     private final MatchingEngineService matchingEngineService;
-    private final WarehouseService warehouseService;
     private final WarehouseRepository warehouseRepository;
     private final GeocodingService geocodingService;
 
@@ -28,19 +28,18 @@ public class BookingService {
                           AppUserRepository appUserRepository,
                           PricingEngineService pricingEngineService,
                           MatchingEngineService matchingEngineService,
-                          WarehouseService warehouseService,
                           WarehouseRepository warehouseRepository,
                           GeocodingService geocodingService) {
         this.deliveryOrderRepository = deliveryOrderRepository;
         this.appUserRepository = appUserRepository;
         this.pricingEngineService = pricingEngineService;
         this.matchingEngineService = matchingEngineService;
-        this.warehouseService = warehouseService;
         this.warehouseRepository = warehouseRepository;
         this.geocodingService = geocodingService;
     }
 
     public BookingDtos.BookingResponse createBooking(String customerEmail, BookingDtos.BookingRequest request) {
+
         AppUser customer = appUserRepository.findByEmail(customerEmail)
                 .orElseThrow(() -> new IllegalArgumentException("Customer not found"));
 
@@ -49,13 +48,14 @@ public class BookingService {
         Warehouse originWarehouse = null;
         Warehouse destinationWarehouse = null;
 
-        // Warehouse usage rules
-        boolean usesWarehouses = request.deliveryType() == DeliveryType.STANDARD
-                || (request.deliveryType() == DeliveryType.EXPRESS && !sameZone);
+        boolean usesWarehouses =
+                request.deliveryType() == DeliveryType.STANDARD ||
+                        (request.deliveryType() == DeliveryType.EXPRESS && !sameZone);
 
         if (usesWarehouses) {
             originWarehouse = warehouseRepository.findByZone(request.pickupZone())
                     .orElseThrow(() -> new IllegalArgumentException("Pickup zone not serviceable"));
+
             if (originWarehouse.getCurrentLoad() >= originWarehouse.getCapacity()) {
                 throw new IllegalArgumentException("Origin warehouse full");
             }
@@ -64,39 +64,69 @@ public class BookingService {
                     .orElseThrow(() -> new IllegalArgumentException("Drop zone not serviceable"));
         }
 
-        GeocodingService.GeoPoint pickupPoint = geocodingService.geocode(request.pickupAddress(), request.pickupZone());
-        GeocodingService.GeoPoint dropPoint = geocodingService.geocode(request.dropAddress(), request.dropZone());
-        double distanceKm = DistanceUtils.distanceKm(
+        // 📍 Get pickup location
+        GeocodingService.GeoPoint pickupPoint;
+        if (request.pickupLatitude() != null && request.pickupLongitude() != null) {
+            pickupPoint = new GeocodingService.GeoPoint(
+                    request.pickupLatitude(),
+                    request.pickupLongitude()
+            );
+        } else {
+            pickupPoint = geocodingService.geocode(request.pickupAddress());
+        }
+
+        // 📍 Get drop location
+        GeocodingService.GeoPoint dropPoint =
+                geocodingService.geocode(request.dropAddress());
+
+        // 📏 Calculate distance
+        double distanceKm = pricingEngineService.calculateDistance(
                 pickupPoint.latitude(), pickupPoint.longitude(),
                 dropPoint.latitude(), dropPoint.longitude()
         );
 
+        // 📦 Create order
         DeliveryOrder order = new DeliveryOrder();
         order.setCustomer(customer);
         order.setDeliveryType(request.deliveryType());
+
         order.setPickupAddress(request.pickupAddress());
         order.setDropAddress(request.dropAddress());
+
         order.setPickupZone(request.pickupZone());
         order.setDropZone(request.dropZone());
+
         order.setReceiverName(request.receiverName());
         order.setReceiverMobile(request.receiverMobile());
+
         order.setWeightKg(request.weightKg());
         order.setLengthCm(request.lengthCm());
         order.setBreadthCm(request.breadthCm());
         order.setHeightCm(request.heightCm());
+
         order.setPickupLatitude(pickupPoint.latitude());
         order.setPickupLongitude(pickupPoint.longitude());
         order.setDropLatitude(dropPoint.latitude());
         order.setDropLongitude(dropPoint.longitude());
 
-        order.setEstimatedPrice(pricingEngineService.estimatePrice(request.deliveryType(), distanceKm, request.weightKg()));
+        // 💰 NEW PRICING (DISTANCE BASED)
+        order.setEstimatedPrice(
+                pricingEngineService.estimatePrice(
+                        request.deliveryType(),
+                        request.weightKg(),
+                        request.lengthCm(),
+                        request.breadthCm(),
+                        request.heightCm(),
+                        distanceKm
+                )
+        );
+
         order.setStatus(DeliveryStatus.CREATED);
 
-        // Attach warehouses if needed
-        order.setWarehouse(originWarehouse); // origin warehouse for STANDARD and cross-zone EXPRESS
+        // 🏭 Warehouses
+        order.setWarehouse(originWarehouse);
         order.setDestinationWarehouse(destinationWarehouse);
 
-        // Increment origin warehouse load when an order is assigned to it (standard/cross-zone flows)
         if (originWarehouse != null) {
             originWarehouse.setCurrentLoad(originWarehouse.getCurrentLoad() + 1);
             warehouseRepository.save(originWarehouse);
@@ -104,7 +134,7 @@ public class BookingService {
 
         DeliveryOrder saved = deliveryOrderRepository.save(order);
 
-        // Phase-1 notification: drivers will see tasks via polling; this keeps ranking logic in place.
+        // 🚚 Notify drivers (polling based)
         matchingEngineService.rankAvailableDrivers(saved);
 
         return new BookingDtos.BookingResponse(
@@ -116,7 +146,10 @@ public class BookingService {
     }
 
     public List<DeliveryOrder> userOrders(String customerEmail) {
-        Long customerId = appUserRepository.findByEmail(customerEmail).orElseThrow().getId();
+        Long customerId = appUserRepository.findByEmail(customerEmail)
+                .orElseThrow()
+                .getId();
+
         return deliveryOrderRepository.findByCustomerId(customerId);
     }
 }

@@ -1,26 +1,35 @@
 package com.logistics.smartlogistics.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import java.util.Map;
 
-/**
- * Phase-1 placeholder for external geocoding (Google Maps etc).
- * For now it deterministically converts an address+zone into coordinates
- * so the system is fully runnable without external APIs.
- */
 @Service
 public class GeocodingService {
 
-    public GeoPoint geocode(String address, String zone) {
-        int h = Math.abs((address + "|" + zone).hashCode());
-        double lat = ((h % 180000) / 1000.0) - 90.0;   // [-90, 90)
-        double lng = (((h / 180000) % 360000) / 1000.0) - 180.0; // [-180, 180)
-        // If values are outside expected range due to integer division edge cases, clamp.
-        lat = Math.max(-90.0, Math.min(90.0, lat));
-        lng = Math.max(-180.0, Math.min(180.0, lng));
-        return new GeoPoint(lat, lng);
+    private static final String API_KEY = "331f1f6760fd4668b486d2b05886a928";
+
+    public GeoPoint geocode(String address) {
+        String url = "https://api.opencagedata.com/geocode/v1/json?q="
+                + address.replace(" ", "+")
+                + "&key=" + API_KEY;
+
+        RestTemplate restTemplate = new RestTemplate();
+        Map response = restTemplate.getForObject(url, Map.class);
+
+        var results = (java.util.List<Map>) response.get("results");
+
+        if (results != null && !results.isEmpty()) {
+            Map geometry = (Map) results.get(0).get("geometry");
+
+            double lat = (double) geometry.get("lat");
+            double lng = (double) geometry.get("lng");
+
+            return new GeoPoint(lat, lng);
+        }
+
+        throw new RuntimeException("Unable to geocode address");
     }
 
-    public record GeoPoint(double latitude, double longitude) {
-    }
+    public record GeoPoint(double latitude, double longitude) {}
 }
-

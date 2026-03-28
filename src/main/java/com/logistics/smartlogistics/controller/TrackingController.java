@@ -1,6 +1,7 @@
 package com.logistics.smartlogistics.controller;
 
 import com.logistics.smartlogistics.dto.TrackingDtos;
+import com.logistics.smartlogistics.entity.TrackingEvent;
 import com.logistics.smartlogistics.entity.TrackingLog;
 import com.logistics.smartlogistics.service.TrackingService;
 import jakarta.validation.Valid;

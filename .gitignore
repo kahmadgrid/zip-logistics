@@ -120,6 +120,6 @@ docker-compose.override.yml
 # Misc
 
 # ===============================
-
+node_modules
 *.swp
 *.swo

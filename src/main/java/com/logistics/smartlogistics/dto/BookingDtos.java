@@ -9,19 +9,20 @@ import java.math.BigDecimal;
 
 public class BookingDtos {
     public record BookingRequest(
-            @NotNull DeliveryType deliveryType,
-            @NotBlank String pickupAddress,
-            @NotBlank String dropAddress,
-            @NotBlank String pickupZone,
-            @NotBlank String dropZone,
-            @NotBlank String receiverName,
-            @NotBlank String receiverMobile,
-            @NotNull Double weightKg,
-            @NotNull Double lengthCm,
-            @NotNull Double breadthCm,
-            @NotNull Double heightCm
-    ) {
-    }
+            DeliveryType deliveryType,
+            String pickupAddress,
+            String dropAddress,
+            String pickupZone,
+            String dropZone,
+            String receiverName,
+            String receiverMobile,
+            double weightKg,
+            double lengthCm,
+            double breadthCm,
+            double heightCm,
+            Double pickupLatitude,   // ← add this (nullable)
+            Double pickupLongitude   // ← add this (nullable)
+    ) {}
 
     public record BookingResponse(
             Long id,

@@ -94,20 +94,7 @@ logs/
 .idea
 # ===============================
 
-application.properties
-application.yml
 
-# If you want to include config, comment above and use profiles:
-
-# application-*.properties
-
-# application-*.yml
-
-# ===============================
-
-# Environment Variables
-
-# ===============================
 
 .env
 package-lock.json

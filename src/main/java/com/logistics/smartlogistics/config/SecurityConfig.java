@@ -47,6 +47,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/ws/**", "/actuator/health").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/driver/**").hasRole("DRIVER")
+                        .requestMatchers("/api/pricing/estimate").permitAll()
                         .requestMatchers("/api/bookings/**", "/api/tracking/**")
                         .hasAnyRole("USER", "DRIVER", "ADMIN")
 

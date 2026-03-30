@@ -25,4 +25,16 @@ public class AuthController {
     public AuthDtos.AuthResponse login(@Valid @RequestBody AuthDtos.LoginRequest request) {
         return authService.login(request);
     }
+
+    @PatchMapping("/password")
+    public String changePassword(@RequestBody AuthDtos.ChangePasswordRequest request,
+                                 org.springframework.security.core.Authentication authentication) {
+
+        String email = authentication.getName(); // 🔥 from JWT
+
+        authService.changePassword(email, request);
+
+        return "Password updated successfully";
+    }
+
 }

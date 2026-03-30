@@ -1,26 +1,49 @@
 package com.logistics.smartlogistics.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
-/**
- * Phase-1 placeholder for external geocoding (Google Maps etc).
- * For now it deterministically converts an address+zone into coordinates
- * so the system is fully runnable without external APIs.
- */
+import java.util.List;
+import java.util.Map;
+
 @Service
 public class GeocodingService {
 
-    public GeoPoint geocode(String address, String zone) {
-        int h = Math.abs((address + "|" + zone).hashCode());
-        double lat = ((h % 180000) / 1000.0) - 90.0;   // [-90, 90)
-        double lng = (((h / 180000) % 360000) / 1000.0) - 180.0; // [-180, 180)
-        // If values are outside expected range due to integer division edge cases, clamp.
-        lat = Math.max(-90.0, Math.min(90.0, lat));
-        lng = Math.max(-180.0, Math.min(180.0, lng));
+    @Value("${opencage.api.key}")
+    private String apiKey;
+
+    private final RestTemplate restTemplate = new RestTemplate();
+
+    public GeoPoint geocode(String address) {
+
+        String url = "https://api.opencagedata.com/geocode/v1/json?q="
+                + address.replace(" ", "+")
+                + "&key=" + apiKey;
+
+        Map response = restTemplate.getForObject(url, Map.class);
+
+        if (response == null) {
+            throw new RuntimeException("No response from geocoding API");
+        }
+
+        List<Map<String, Object>> results = (List<Map<String, Object>>) response.get("results");
+
+        if (results == null || results.isEmpty()) {
+            throw new RuntimeException("No results found for address: " + address);
+        }
+
+        Map<String, Object> geometry = (Map<String, Object>) results.get(0).get("geometry");
+
+        if (geometry == null) {
+            throw new RuntimeException("Invalid response: missing geometry");
+        }
+
+        double lat = ((Number) geometry.get("lat")).doubleValue();
+        double lng = ((Number) geometry.get("lng")).doubleValue();
+
         return new GeoPoint(lat, lng);
     }
 
-    public record GeoPoint(double latitude, double longitude) {
-    }
+    public record GeoPoint(double latitude, double longitude) {}
 }
-

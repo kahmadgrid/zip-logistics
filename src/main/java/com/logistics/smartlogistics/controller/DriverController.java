@@ -10,6 +10,7 @@ import com.logistics.smartlogistics.repository.DriverProfileRepository;
 import com.logistics.smartlogistics.repository.DeliveryOrderRepository;
 import com.logistics.smartlogistics.repository.WarehouseRepository;
 import com.logistics.smartlogistics.service.TrackingService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
@@ -154,6 +155,16 @@ public class DriverController {
         driver.setCurrentLongitude(request.longitude());
         driverProfileRepository.save(driver);
         return saved;
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<?> getMyProfile(Authentication authentication) {
+        var user = appUserRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        return driverProfileRepository.findByUserId(user.getId())
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.noContent().build()); // ✅ 204 if not exists
     }
 
     private DriverProfile getDriver(Authentication authentication) {

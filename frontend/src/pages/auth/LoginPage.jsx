@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MapPin, Loader2, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -7,12 +8,25 @@ import { useAuth } from '../../context/AuthContext';
 import { getErrMsg } from '../../utils/constants';
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const navigate  = useNavigate();
 
   const [form, setForm]       = useState({ emailOrMobile: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [showPwd, setShowPwd] = useState(false);
+
+  // 🔥 Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      const dashMap = {
+        ROLE_ADMIN:  '/admin/dashboard',
+        ROLE_DRIVER: '/driver/dashboard',
+        ROLE_USER:   '/user/dashboard',
+      };
+
+      navigate(dashMap[user.role] ?? '/user/dashboard');
+    }
+  }, [user, navigate]);
 
   const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -21,7 +35,9 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const { data } = await authService.login(form);
+
       login(data.token, { email: form.emailOrMobile, role: data.role, ...data });
+
       toast.success('Welcome back!');
 
       const dashMap = {
@@ -29,15 +45,17 @@ export default function LoginPage() {
         ROLE_DRIVER: '/driver/dashboard',
         ROLE_USER:   '/user/dashboard',
       };
+
       navigate(dashMap[data.role] ?? '/user/dashboard');
+
     } catch (err) {
-        console.log("LOGIN ERROR:", err);
-        console.log("ERROR DATA:", err.response?.data);
+      console.log("LOGIN ERROR:", err);
+      console.log("ERROR DATA:", err.response?.data);
 
-        const msg = getErrMsg(err);
+      const msg = getErrMsg(err);
+      toast.error(msg || "Login failed");
 
-        toast.error(msg || "Login failed");
-      }finally {
+    } finally {
       setLoading(false);
     }
   };

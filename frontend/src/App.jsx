@@ -30,7 +30,7 @@ import UsersPage      from './pages/admin/UsersPage';
 import DriversPage    from './pages/admin/DriversPage';
 import BatchingPage   from './pages/admin/BatchingPage';
 import LogsPage       from './pages/admin/LogsPage';
-
+import PublicRoute from './pages/auth/PublicRoute'
 export default function App() {
   return (
     <AuthProvider>
@@ -54,8 +54,17 @@ export default function App() {
 
           {/* Public */}
           <Route path="/"         element={<LandingPage />} />
-          <Route path="/login"    element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/login" element={
+            <PublicRoute>
+              <LoginPage />
+            </PublicRoute>
+          } />
+
+          <Route path="/register" element={
+            <PublicRoute>
+              <RegisterPage />
+            </PublicRoute>
+          } />
 
           {/* User routes */}
           <Route path="/user/dashboard"         element={<ProtectedRoute role="ROLE_USER"><UserDashboard /></ProtectedRoute>} />

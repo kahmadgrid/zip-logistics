@@ -26,9 +26,9 @@ async function reverseGeocode(lat, lng) {
       `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
     );
     const data = await res.json();
-    return data.display_name ?? `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    return data.display_name ?? `${lat.toFixed(10)}, ${lng.toFixed(10)}`;
   } catch {
-    return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    return `${lat.toFixed(10)}, ${lng.toFixed(10)}`;
   }
 }
 

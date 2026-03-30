@@ -1,4 +1,4 @@
-import React, { useState, useMemo,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Package, Loader2, CheckCircle, Navigation } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -7,97 +7,70 @@ import { SelectField, NumberField } from '../../components/forms/FormFields';
 import PriceBreakdown from '../../components/common/PriceBreakdown';
 import { bookingService } from '../../services/bookingService';
 import { ZONES, DELIVERY_TYPES, getErrMsg } from '../../utils/constants';
-import { calculatePrice } from '../../utils/priceCalculator';
+import { usePickupLocation } from './usePickupLocation';
+import DropAddressInput from './DropAddressInput';
 
 const INIT = {
-  deliveryType:   'STANDARD',
-  pickupAddress:  '', dropAddress:    '',
-  pickupZone:     '', dropZone:       '',
-  pickupLatitude: '', pickupLongitude: '',
-  receiverName:   '', receiverMobile: '',
-  weightKg:       '', lengthCm:       '',
-  breadthCm:      '', heightCm:       '',
+  deliveryType:    'STANDARD',
+  pickupAddress:   '', dropAddress:    '',
+  pickupZone:      '', dropZone:       '',
+  pickupLatitude:  '', pickupLongitude: '',
+  receiverName:    '', receiverMobile: '',
+  weightKg:        '', lengthCm:       '',
+  breadthCm:       '', heightCm:       '',
 };
 
-// ── Reverse geocode lat/lng → address string ──────────────────────
-async function reverseGeocode(lat, lng) {
-  try {
-    const res  = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
-    );
-    const data = await res.json();
-    return data.display_name ?? `${lat.toFixed(10)}, ${lng.toFixed(10)}`;
-  } catch {
-    return `${lat.toFixed(10)}, ${lng.toFixed(10)}`;
-  }
-}
-
 export default function CreateBookingPage() {
-  const navigate               = useNavigate();
-  const [form, setForm]        = useState(INIT);
-  const [loading, setLoading]  = useState(false);
-  const [locating, setLocating] = useState(false);
+  const navigate                        = useNavigate();
+  const [form, setForm]                 = useState(INIT);
+  const [loading, setLoading]           = useState(false);
+  const [distance, setDistance]         = useState(null);
+  const [price, setPrice]               = useState(null);
+  const [priceLoading, setPriceLoading] = useState(false);
 
-  const [distance, setDistance] = useState(null);
+  // ── Pickup live location ──────────────────────────────────────
+  const { locating, getLocation } = usePickupLocation();
 
-  const onChange = (e) => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
-
-  // ── Get live location for pickup ─────────────────────────────
-  const handlePickupLocation = () => {
-    if (!navigator.geolocation) return toast.error('Geolocation not supported');
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude: lat, longitude: lng } = pos.coords;
-        try {
-          const address = await reverseGeocode(lat, lng);
-          setForm(f => ({
-            ...f,
-            pickupAddress:   address,
-            pickupLatitude:  lat.toString(),
-            pickupLongitude: lng.toString(),
-          }));
-          toast.success('Pickup location detected!');
-        } catch {
-          toast.error('Could not get address');
-        } finally {
-          setLocating(false);
-        }
-      },
-      () => {
-        toast.error('Could not access location. Check browser permissions.');
-        setLocating(false);
-      },
-      { enableHighAccuracy: true }
-    );
+  const handlePickupLocation = async () => {
+    try {
+      const { address, latitude, longitude } = await getLocation();
+      setForm(f => ({
+        ...f,
+        pickupAddress:   address,
+        pickupLatitude:  latitude,
+        pickupLongitude: longitude,
+      }));
+    } catch {
+      // toast already shown inside the hook
+    }
   };
 
-  const [price, setPrice] = useState(null);
-  const [priceLoading, setPriceLoading] = useState(false);
+  // ── Generic field change ──────────────────────────────────────
+  const onChange = (e) => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+
+  // ── Price estimation ──────────────────────────────────────────
+  const priceReady = !!(
+    form.weightKg && form.lengthCm && form.breadthCm &&
+    form.heightCm && form.pickupAddress && form.dropAddress
+  );
+
   useEffect(() => {
     const fetchPrice = async () => {
       if (!priceReady) return;
-
       setPriceLoading(true);
       try {
         const payload = {
-          deliveryType: form.deliveryType,
-          weightKg: parseFloat(form.weightKg),
-          lengthCm: parseFloat(form.lengthCm),
-          breadthCm: parseFloat(form.breadthCm),
-          heightCm: parseFloat(form.heightCm),
-          pickupAddress: form.pickupAddress,
-          dropAddress: form.dropAddress,
-          pickupLatitude: form.pickupLatitude
-            ? parseFloat(form.pickupLatitude)
-            : undefined,
-          pickupLongitude: form.pickupLongitude
-            ? parseFloat(form.pickupLongitude)
-            : undefined,
+          deliveryType:    form.deliveryType,
+          weightKg:        parseFloat(form.weightKg),
+          lengthCm:        parseFloat(form.lengthCm),
+          breadthCm:       parseFloat(form.breadthCm),
+          heightCm:        parseFloat(form.heightCm),
+          pickupAddress:   form.pickupAddress,
+          dropAddress:     form.dropAddress,
+          pickupLatitude:  form.pickupLatitude  ? parseFloat(form.pickupLatitude)  : undefined,
+          pickupLongitude: form.pickupLongitude ? parseFloat(form.pickupLongitude) : undefined,
         };
-
         const { data } = await bookingService.estimatePrice(payload);
-
         setPrice(data.price);
         setDistance(data.distanceKm);
       } catch (err) {
@@ -106,28 +79,14 @@ export default function CreateBookingPage() {
         setPriceLoading(false);
       }
     };
-
     fetchPrice();
   }, [
-    form.deliveryType,
-    form.weightKg,
-    form.lengthCm,
-    form.breadthCm,
-    form.heightCm,
-    form.pickupAddress,
-    form.dropAddress,
-    form.pickupLatitude,
-    form.pickupLongitude,
+    form.deliveryType, form.weightKg, form.lengthCm, form.breadthCm,
+    form.heightCm, form.pickupAddress, form.dropAddress,
+    form.pickupLatitude, form.pickupLongitude,
   ]);
-const priceReady = !!(
-  form.weightKg &&
-  form.lengthCm &&
-  form.breadthCm &&
-  form.heightCm &&
-  form.pickupAddress &&
-  form.dropAddress
-);
 
+  // ── Submit ────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -166,7 +125,7 @@ const priceReady = !!(
           {/* Delivery Type */}
           <div className="card">
             <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-              <Package size={15} className="text-brand-400" /> Delivery Type
+              <Package size={15} className="text-amber-400" /> Delivery Type
             </h3>
             <div className="flex gap-3">
               {DELIVERY_TYPES.map((dt) => (
@@ -175,8 +134,8 @@ const priceReady = !!(
                   onClick={() => setForm(f => ({ ...f, deliveryType: dt }))}
                   className={`flex-1 py-3 px-4 rounded-xl border text-sm font-semibold transition-all text-left
                     ${form.deliveryType === dt
-                      ? 'bg-brand-600/20 border-brand-500 text-brand-300'
-                      : 'border-surface-border text-slate-400 hover:border-slate-500'}`}
+                      ? 'bg-amber-500/15 border-amber-500 text-amber-300'
+                      : 'border-surface-border text-stone-400 hover:border-stone-500'}`}
                 >
                   {dt === 'EXPRESS' ? '⚡ EXPRESS' : '📦 STANDARD'}
                   <p className="text-[11px] font-normal mt-0.5 opacity-70">
@@ -192,8 +151,9 @@ const priceReady = !!(
             <h3 className="text-sm font-semibold text-white mb-4">📍 Pickup & Drop</h3>
             <div className="space-y-4">
 
-              {/* Pickup address with live location button */}
               <div className="grid grid-cols-2 gap-4">
+
+                {/* Pickup address — original design, uses usePickupLocation hook */}
                 <div>
                   <label className="label">
                     Pickup Address <span className="text-red-400 ml-0.5">*</span>
@@ -216,35 +176,27 @@ const priceReady = !!(
                                   w-6 h-6 rounded-md flex items-center justify-center
                                   transition-all duration-200
                                   ${locating
-                                    ? 'text-brand-400 animate-pulse-soft'
-                                    : 'text-slate-500 hover:text-brand-400 hover:bg-brand-500/10'}`}
+                                    ? 'text-amber-400 animate-pulse-soft'
+                                    : 'text-slate-500 hover:text-amber-400 hover:bg-amber-500/10'}`}
                     >
                       {locating
                         ? <Loader2 size={13} className="animate-spin" />
                         : <Navigation size={13} />}
                     </button>
                   </div>
-                  {/* Show lat/lng if captured */}
                   {form.pickupLatitude && form.pickupLongitude && (
-                    <p className="text-[10px] text-brand-400 mt-1 font-mono flex items-center gap-1">
-                      📍 {parseFloat(form.pickupLatitude).toFixed(5)}, {parseFloat(form.pickupLongitude).toFixed(5)}
+                    <p className="text-[10px] text-amber-400 mt-1 font-mono flex items-center gap-1">
+                      📍 {parseFloat(form.pickupLatitude).toFixed(10)}, {parseFloat(form.pickupLongitude).toFixed(10)}
                     </p>
                   )}
                 </div>
 
-                <div>
-                  <label className="label">
-                    Drop Address <span className="text-red-400 ml-0.5">*</span>
-                  </label>
-                  <input
-                    className="input"
-                    name="dropAddress"
-                    value={form.dropAddress}
-                    onChange={onChange}
-                    placeholder="MG Road, Bengaluru"
-                    required
-                  />
-                </div>
+                {/* Drop address — uses DropAddressInput component */}
+                <DropAddressInput
+                  value={form.dropAddress}
+                  onChange={onChange}
+                />
+
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -276,7 +228,7 @@ const priceReady = !!(
           {/* Package Dimensions */}
           <div className="card">
             <h3 className="text-sm font-semibold text-white mb-1">📐 Package Details</h3>
-            <p className="text-xs text-slate-500 mb-4">
+            <p className="text-xs text-stone-500 mb-4">
               Chargeable weight = max(actual, volumetric). Volumetric = L × B × H ÷ 5000.
             </p>
             <div className="grid grid-cols-2 gap-4">
@@ -311,16 +263,12 @@ const priceReady = !!(
             loading={priceLoading}
           />
 
-          <div className="card text-xs text-slate-500 space-y-1.5">
-            <p className="font-semibold text-slate-400 text-[11px] uppercase tracking-wider mb-2">
+          <div className="card text-xs text-stone-500 space-y-1.5">
+            <p className="font-semibold text-stone-400 text-[11px] uppercase tracking-wider mb-2">
               Pricing Guide
             </p>
-            <p>📦 Standard: ₹49 base + ₹12/kg</p>
-            <p>⚡ Express: ₹99 base + ₹20/kg</p>
             <p>📦 Standard: ₹49 base + ₹12/kg + ₹5/km</p>
             <p>⚡ Express: ₹99 base + ₹20/kg + ₹8/km</p>
-            <p>📐 Volumetric: L×B×H ÷ 5000</p>
-            <p>🧾 GST 18% included  </p>
             <p>📐 Volumetric: L×B×H ÷ 5000</p>
             <p>🧾 GST 18% included in total</p>
           </div>

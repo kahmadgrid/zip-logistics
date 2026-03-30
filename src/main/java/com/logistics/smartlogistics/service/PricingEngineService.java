@@ -1,10 +1,15 @@
 package com.logistics.smartlogistics.service;
 
+import com.logistics.smartlogistics.dto.RouteResponse;
 import com.logistics.smartlogistics.enums.DeliveryType;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class PricingEngineService {
@@ -62,22 +67,37 @@ public class PricingEngineService {
     /**
      * 🌍 Distance calculation (Haversine formula)
      */
+    private final String API_KEY = "${DIRECTION_API_KEY}";
+    private final WebClient webClient = WebClient.create();
+
     public double calculateDistance(
-            double lat1, double lon1,
-            double lat2, double lon2
+            double startLat, double startLng,
+            double endLat, double endLng
     ) {
-        final int R = 6371; // Earth radius in KM
 
-        double latDistance = Math.toRadians(lat2 - lat1);
-        double lonDistance = Math.toRadians(lon2 - lon1);
 
-        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
-                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        String url = "https://api.openrouteservice.org/v2/directions/driving-car";
 
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        Map<String, Object> body = Map.of(
+                "coordinates", List.of(
+                        List.of(startLng, startLat),
+                        List.of(endLng, endLat)
+                )
+        );
 
-        return R * c;
+        RouteResponse response = webClient.post()
+                .uri(url)
+                .header("Authorization", API_KEY)
+                .header("Content-Type", "application/json")
+                .bodyValue(body)
+                .retrieve()
+                .bodyToMono(RouteResponse.class)
+                .block();
+
+        double distanceMeters =
+                response.getRoutes().get(0).getSummary().getDistance();
+        System.out.println("Time ETA: "+ response.getRoutes().get(0).getSummary().getDuration()/60);
+        return distanceMeters / 1000.0; // ✅ convert to km
     }
 
     /**

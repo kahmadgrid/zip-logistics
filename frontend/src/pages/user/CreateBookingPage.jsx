@@ -186,7 +186,7 @@ export default function CreateBookingPage() {
                   </div>
                   {form.pickupLatitude && form.pickupLongitude && (
                     <p className="text-[10px] text-amber-400 mt-1 font-mono flex items-center gap-1">
-                      📍 {parseFloat(form.pickupLatitude).toFixed(5)}, {parseFloat(form.pickupLongitude).toFixed(5)}
+                      📍 {parseFloat(form.pickupLatitude).toFixed(10)}, {parseFloat(form.pickupLongitude).toFixed(10)}
                     </p>
                   )}
                 </div>

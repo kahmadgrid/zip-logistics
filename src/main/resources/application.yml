@@ -25,6 +25,11 @@ app:
     secret: ${JWT_SECRET}
     expiration-ms: 86400000
 
+
 opencage:
   api:
     key: ${OPENCAGE_API_KEY}
+
+direction:
+  api:
+    key: ${DIRECTION_API_KEY}

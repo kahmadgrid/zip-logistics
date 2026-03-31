@@ -3,6 +3,7 @@ package com.logistics.smartlogistics.service;
 import com.logistics.smartlogistics.dto.RouteResponse;
 import com.logistics.smartlogistics.enums.DeliveryType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -67,7 +68,9 @@ public class PricingEngineService {
     /**
      * 🌍 Distance calculation (Haversine formula)
      */
-    private final String API_KEY = "${DIRECTION_API_KEY}";
+
+    @Value("${direction.api.key}")
+    private String API_KEY;
     private final WebClient webClient = WebClient.create();
 
     public double calculateDistance(

@@ -30,8 +30,25 @@ export default function DriversPage() {
       render: (v) => <span className="font-mono text-xs text-slate-300">{v ?? '—'}</span> },
     { key: 'currentZone',  label: 'Zone',
       render: (v) => <span className="text-xs text-slate-400">{v ?? '—'}</span> },
-    { key: 'availability', label: 'Status',
-      render: (v) => <StatusBadge status={v} type="availability" /> },
+    {
+      key: 'availability',
+      label: 'Status',
+      render: (v, row) => {
+        const status = row.user?.active === false ? 'OFFLINE' : v;
+
+        return (
+          <StatusBadge
+            status={status}
+            type="availability"
+            className={
+              row.user?.active === false
+                ? 'text-red-400 bg-red-400/10 border-red-400/30'
+                : ''
+            }
+          />
+        );
+      }
+    },
     { key: 'currentLatitude', label: 'Location',
       render: (v, row) =>
         v ? (

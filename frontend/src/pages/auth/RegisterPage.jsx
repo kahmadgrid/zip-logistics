@@ -91,12 +91,12 @@ export default function RegisterPage() {
             <div>
               <label className="label">Mobile</label>
               <input className="input" name="mobile" value={form.mobile}
-                onChange={onChange} placeholder="9876543210" required />
+                onChange={onChange} placeholder="9876543210" pattern="[0-9]{10}" Length={10} required />
             </div>
             <div>
               <label className="label">Password</label>
               <input className="input" type="password" name="password" value={form.password}
-                onChange={onChange} placeholder="Min 8 chars" required />
+                onChange={onChange} placeholder="Min 8 chars" minLength={8} required />
             </div>
 
             <button type="submit" disabled={loading} className="btn-primary w-full justify-center mt-2">

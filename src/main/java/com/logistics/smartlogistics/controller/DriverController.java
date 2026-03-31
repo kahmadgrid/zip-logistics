@@ -170,7 +170,31 @@ public class DriverController {
     private DriverProfile getDriver(Authentication authentication) {
         var user = appUserRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
         return driverProfileRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Driver profile not created"));
+    }
+
+    @PutMapping("/activate")
+    public ResponseEntity<?> activate(Authentication authentication) {
+
+        var user = appUserRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        user.setActive(true);
+        appUserRepository.save(user);
+
+        return ResponseEntity.ok("Account activated");
+    }
+
+    @PutMapping("/deactivate")
+    public ResponseEntity<?> deactivate(Authentication authentication) {
+        var user = appUserRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        user.setActive(false);
+        appUserRepository.save(user);
+
+        return ResponseEntity.ok("Account deactivated");
     }
 }

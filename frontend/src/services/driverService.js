@@ -29,6 +29,12 @@ export const driverService = {
       longitude: lng,
       status,
     }).then(res => res.data),
+
+    deactivateAccount: () =>
+      api.put('/api/driver/deactivate').then(res => res.data),
+
+    activateAccount: () =>
+      api.put('/api/driver/activate').then(res => res.data),
 };
 
 

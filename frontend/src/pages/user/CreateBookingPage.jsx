@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Loader2, CheckCircle, Navigation } from 'lucide-react';
+import { Package, Loader2, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { SelectField, NumberField } from '../../components/forms/FormFields';
@@ -9,6 +9,7 @@ import { bookingService } from '../../services/bookingService';
 import { ZONES, DELIVERY_TYPES, getErrMsg } from '../../utils/constants';
 import { usePickupLocation } from './usePickupLocation';
 import DropAddressInput from './DropAddressInput';
+import PickupAddressInput from './PickupAddressInput';
 
 const INIT = {
   deliveryType:    'STANDARD',
@@ -47,6 +48,21 @@ export default function CreateBookingPage() {
 
   // ── Generic field change ──────────────────────────────────────
   const onChange = (e) => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+
+  // ── Pickup address change — handles both typed input and suggestion selection ──
+  // When a suggestion is selected, PickupAddressInput attaches e.location = { latitude, longitude }
+  const onPickupChange = (e) => {
+    const next = { ...form, pickupAddress: e.target.value };
+    if (e.location) {
+      next.pickupLatitude  = e.location.latitude;
+      next.pickupLongitude = e.location.longitude;
+    } else {
+      // User typed manually — clear stale coordinates so price uses address string only
+      next.pickupLatitude  = '';
+      next.pickupLongitude = '';
+    }
+    setForm(next);
+  };
 
   // ── Price estimation ──────────────────────────────────────────
   const priceReady = !!(
@@ -153,43 +169,16 @@ export default function CreateBookingPage() {
 
               <div className="grid grid-cols-2 gap-4">
 
-                {/* Pickup address — original design, uses usePickupLocation hook */}
-                <div>
-                  <label className="label">
-                    Pickup Address <span className="text-red-400 ml-0.5">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      className="input pr-10"
-                      name="pickupAddress"
-                      value={form.pickupAddress}
-                      onChange={onChange}
-                      placeholder="Connaught Place, Delhi"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={handlePickupLocation}
-                      disabled={locating}
-                      title="Use my current location"
-                      className={`absolute right-2 top-1/2 -translate-y-1/2
-                                  w-6 h-6 rounded-md flex items-center justify-center
-                                  transition-all duration-200
-                                  ${locating
-                                    ? 'text-amber-400 animate-pulse-soft'
-                                    : 'text-slate-500 hover:text-amber-400 hover:bg-amber-500/10'}`}
-                    >
-                      {locating
-                        ? <Loader2 size={13} className="animate-spin" />
-                        : <Navigation size={13} />}
-                    </button>
-                  </div>
-                  {form.pickupLatitude && form.pickupLongitude && (
-                    <p className="text-[10px] text-amber-400 mt-1 font-mono flex items-center gap-1">
-                      📍 {parseFloat(form.pickupLatitude).toFixed(10)}, {parseFloat(form.pickupLongitude).toFixed(10)}
-                    </p>
-                  )}
-                </div>
+                {/* Pickup address — autocomplete suggestions + pinpoint button */}
+                <PickupAddressInput
+                  value={form.pickupAddress}
+                  onChange={onPickupChange}
+                  onPinpoint={handlePickupLocation}
+                  locating={locating}
+                  latitude={form.pickupLatitude}
+                  longitude={form.pickupLongitude}
+                  required
+                />
 
                 {/* Drop address — uses DropAddressInput component */}
                 <DropAddressInput

@@ -20,13 +20,19 @@ api.interceptors.response.use(
   (err) => {
     const isLoginPage = window.location.pathname === '/login';
 
-    // ❌ Don't auto logout on login page
-    if (err.response?.status === 401 && !isLoginPage) {
-      localStorage.clear();
-      window.location.href = '/login';
+    if (
+      (err.response?.status === 401 || err.response?.status === 403) &&
+      !isLoginPage
+    ) {
+      if (onLogout) onLogout(); // ✅ call logout from context
     }
 
     return Promise.reject(err);
   }
 );
+let onLogout = null;
+
+export const setLogoutHandler = (logoutFn) => {
+  onLogout = logoutFn;
+};
 export default api;

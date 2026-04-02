@@ -65,9 +65,6 @@ public class PricingEngineService {
                 .setScale(2, RoundingMode.HALF_UP);
     }
 
-    /**
-     * 🌍 Distance calculation (Haversine formula)
-     */
 
     @Value("${direction.api.key}")
     private String API_KEY;

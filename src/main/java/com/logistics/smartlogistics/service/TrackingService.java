@@ -53,6 +53,6 @@ public class TrackingService {
     }
 
     public List<TrackingLog> getOrderTimeline(Long orderId) {
-        return trackingLogRepository.findByOrderIdOrderByRecordedAtDesc(orderId);
+        return trackingLogRepository.findByOrderIdOrderByRecordedAtAsc(orderId);
     }
 }

@@ -28,3 +28,7 @@ app:
 opencage:
   api:
     key: ${OPENCAGE_API_KEY}
+
+direction:
+  api:
+    key: ${DIRECTION_API_KEY}

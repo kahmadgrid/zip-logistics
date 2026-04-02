@@ -13,30 +13,100 @@ export default function DriverDashboard() {
   const [available, setAvailable] = useState([]);
   const [assigned,  setAssigned]  = useState([]);
   const [loading,   setLoading]   = useState(true);
+  const [isActive, setIsActive] = useState(null);
 
   useEffect(() => {
+    if (isActive === null) {
+      return;
+    }
+
+    if (!isActive) {
+        setLoading(false);
+        return;
+      }
+
+    setLoading(true);
     Promise.allSettled([
       driverService.getAvailableTasks(),
       driverService.getAssignedTasks(),
-    ]).then(([avail, assign]) => {
-      if (avail.status  === 'fulfilled') setAvailable(Array.isArray(avail.value)  ? avail.value  : []);
-      if (assign.status === 'fulfilled') setAssigned(Array.isArray(assign.value) ? assign.value : []);
-    }).finally(() => setLoading(false));
-  }, []);
+    ])
+      .then(([avail, assign]) => {
+        setAvailable(avail.status === 'fulfilled' && Array.isArray(avail.value) ? avail.value : []);
+        setAssigned(assign.status === 'fulfilled' && Array.isArray(assign.value) ? assign.value : []);
+      })
+      .finally(() => setLoading(false));
+  }, [isActive]);
+
+    useEffect(() => {
+      fetchProfile();
+      const interval = setInterval(fetchProfile, 10000); // every 10 sec
+
+      return () => clearInterval(interval);
+    }, []);
 
   const active    = assigned.filter(t => ACTIVE_STATUSES.includes(t.status));
   const completed = assigned.filter(t => COMPLETE_STATUSES.includes(t.status));
+  const handleToggleAccount = async () => {
+    try {
+      console.log("Before toggle:", isActive);
+
+      if (isActive) {
+        console.log("Calling deactivate API");
+        await driverService.deactivateAccount();
+      } else {
+        console.log("Calling activate API");
+        await driverService.activateAccount();
+      }
+
+      console.log("After API call");
+
+      await fetchProfile();
+
+    } catch (err) {
+      console.log("ERROR:", err);
+    }
+  };
+
+    const fetchProfile = async () => {
+      try {
+        const data = await driverService.getMyProfile();
+        console.log("Profile API:", data);
+
+        setIsActive(Boolean(data?.user?.active)); // ✅ FIX
+
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
   return (
     <DashboardLayout>
-      <div className="page-header flex items-start justify-between">
+        {!isActive && (
+          <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm text-center">
+            Your account is deactivated. Activate to continue working.
+          </div>
+        )}
+      <div className="page-header flex items-center justify-between">
         <div>
           <h1>Driver Dashboard</h1>
           <p>{user?.email}</p>
         </div>
-        <Link to="/driver/profile" className="btn-secondary">
-          <User size={15} /> Update Profile
-        </Link>
+        <div className="flex items-center gap-3">
+            <button
+              onClick={handleToggleAccount}
+              className={`btn-secondary ${
+                isActive
+                  ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
+                  : 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
+              }`}
+            >
+              {isActive ? 'Deactivate' : 'Activate'}
+            </button>
+
+            <Link to="/driver/profile" className="btn-secondary flex items-center gap-1">
+              <User size={15} /> Update Profile
+            </Link>
+          </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
@@ -98,7 +168,7 @@ export default function DriverDashboard() {
             </div>
           ) : (
             <div className="space-y-2">
-              {active.slice(0, 4).map(t => (
+              {active.slice(-4).map(t => (
                 <div key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-surface hover:bg-surface-border/30 transition-colors">
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-white font-medium truncate">

@@ -24,6 +24,7 @@ export default function AdminDashboard() {
 
   const onlineDrivers = drivers.filter(d => d.availability === 'ONLINE').length;
   const activeOrders  = logs.filter(l => !['DELIVERED', 'CANCELLED'].includes(l.status)).length;
+  const activeDrivers = drivers.filter(d => d.user?.active !== false).length;
 
   return (
     <DashboardLayout>
@@ -35,7 +36,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <InfoCard label="Total Users"    value={users.length}   icon={Users}    accent="blue"   />
         <InfoCard label="Total Drivers"  value={drivers.length} icon={Truck}    accent="sky"    />
-        <InfoCard label="Online Drivers" value={onlineDrivers}  icon={Activity} accent="green"  />
+        <InfoCard label="Online Drivers" value={activeDrivers}  icon={Activity} accent="green"  />
         <InfoCard label="Active Orders"  value={activeOrders}   icon={Package}  accent="orange" />
       </div>
 
@@ -45,7 +46,7 @@ export default function AdminDashboard() {
           <h2 className="text-base font-semibold text-white mb-4">Recent Users</h2>
           {loading ? <p className="text-slate-500 text-sm">Loading...</p> : (
             <div className="space-y-2">
-              {users.slice(0, 6).map((u) => (
+              {users.slice(-6).reverse().map((u) => (
                 <div key={u.id} className="flex items-center justify-between py-2 border-b border-surface-border/40 last:border-0">
                   <div>
                     <p className="text-sm text-white">{u.fullName ?? u.email}</p>
@@ -75,18 +76,21 @@ export default function AdminDashboard() {
           <h2 className="text-base font-semibold text-white mb-4">Driver Overview</h2>
           {loading ? <p className="text-slate-500 text-sm">Loading...</p> : (
             <div className="space-y-2">
-              {drivers.slice(0, 6).map((d) => (
+              {drivers.slice(-6).reverse().map((d) => (
                 <div key={d.id} className="flex items-center justify-between py-2 border-b border-surface-border/40 last:border-0">
                   <div>
                     <p className="text-sm text-white">{d.user?.email ?? `Driver #${d.id}`}</p>
                     <p className="text-xs text-slate-500">{d.vehicleType} · {d.vehicleNumber}</p>
                   </div>
-                  <span className={`badge border text-[10px]
-                    ${d.availability === 'ONLINE'
-                      ? 'text-green-400 bg-green-400/10 border-green-400/30'
-                      : 'text-slate-400 bg-slate-400/10 border-slate-400/30'}`}>
-                    {d.availability}
-                  </span>
+                  <div className="flex items-center gap-2">
+
+                    <span className={`badge border text-[10px]
+                      ${d.user?.active !== false
+                        ? 'text-green-400 bg-green-400/10 border-green-400/30'
+                        : 'text-red-400 bg-red-400/10 border-red-400/30'}`}>
+                      {d.user?.active !== false ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>

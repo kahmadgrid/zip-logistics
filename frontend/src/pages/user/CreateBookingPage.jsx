@@ -28,6 +28,7 @@ export default function CreateBookingPage() {
   const [distance, setDistance]         = useState(null);
   const [price, setPrice]               = useState(null);
   const [priceLoading, setPriceLoading] = useState(false);
+  const [vehicle, setVehicle] = useState(null);
 
   // ── Pickup live location ──────────────────────────────────────
   const { locating, getLocation } = usePickupLocation();
@@ -89,6 +90,7 @@ export default function CreateBookingPage() {
         const { data } = await bookingService.estimatePrice(payload);
         setPrice(data.price);
         setDistance(data.distanceKm);
+        setVehicle(data.vehicle);
       } catch (err) {
         console.error(err);
       } finally {
@@ -248,6 +250,7 @@ export default function CreateBookingPage() {
           <PriceBreakdown
             price={price}
             distance={distance}
+            vehicle={vehicle}
             isReady={priceReady}
             loading={priceLoading}
           />

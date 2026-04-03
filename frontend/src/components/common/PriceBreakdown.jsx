@@ -1,7 +1,7 @@
 import React from 'react';
 import { Receipt, Info, Loader2 } from 'lucide-react';
 
-export default function PriceBreakdown({ price, distance, isReady, loading }) {
+export default function PriceBreakdown({ price, distance, isReady, loading, vehicle   }) {
 
 
 
@@ -45,6 +45,12 @@ export default function PriceBreakdown({ price, distance, isReady, loading }) {
           ₹{price.toFixed(2)}
         </span>
       </div>
+
+      {vehicle && (
+        <div className="text-xs text-amber-400 mb-2">
+          🚚 Vehicle: {vehicle.replace('_', ' ')}
+        </div>
+      )}
 
       <p className="text-[10px] text-slate-600 mt-3">
         Includes distance, weight, and GST.

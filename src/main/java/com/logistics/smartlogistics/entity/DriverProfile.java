@@ -1,5 +1,6 @@
 package com.logistics.smartlogistics.entity;
 
+import com.logistics.smartlogistics.enums.VehicleType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -27,7 +28,8 @@ public class DriverProfile {
     private AppUser user;
 
     @Column(nullable = false)
-    private String vehicleType;
+    @Enumerated(EnumType.STRING)
+    private VehicleType vehicleType;
 
     @Column(nullable = false)
     private Double rating = 5.0;
@@ -48,4 +50,19 @@ public class DriverProfile {
 
     @Column
     private String vehicleNumber;
+
+    @Override
+    public String toString() {
+        return "DriverProfile{" +
+                "id=" + id +
+                ", user=" + user +
+                ", vehicleType=" + vehicleType +
+                ", rating=" + rating +
+                ", availability=" + availability +
+                ", currentZone='" + currentZone + '\'' +
+                ", currentLatitude=" + currentLatitude +
+                ", currentLongitude=" + currentLongitude +
+                ", vehicleNumber='" + vehicleNumber + '\'' +
+                '}';
+    }
 }

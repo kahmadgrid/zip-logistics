@@ -6,6 +6,8 @@ import com.logistics.smartlogistics.service.GeocodingService;
 import com.logistics.smartlogistics.service.PricingEngineService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
+import com.logistics.smartlogistics.enums.VehicleType;
+import com.logistics.smartlogistics.utils.VehicleUtil;
 
 @RestController
 @RequestMapping("/api/pricing")
@@ -56,20 +58,30 @@ public class PricingController {
                 dropLat, dropLng
         );
 
-        // 🔹 4. Calculate price
+        // 🔹 4. Determine vehicle (IMPORTANT FIX)
+        VehicleType vehicle = VehicleUtil.suggestVehicle(
+                req.getWeightKg(),
+                req.getLengthCm(),
+                req.getBreadthCm(),
+                req.getHeightCm()
+        );
+
+// 🔹 5. Calculate price
         var price = pricingService.estimatePrice(
                 req.getDeliveryType(),
                 req.getWeightKg(),
                 req.getLengthCm(),
                 req.getBreadthCm(),
                 req.getHeightCm(),
-                distanceKm
+                distanceKm,
+                vehicle   // ✅ FIXED
         );
 
         // 🔹 5. Return structured response
         return PricingResponse.builder()
                 .distanceKm(distanceKm)
                 .price(price)
+                .vehicle(vehicle)
                 .build();
     }
 }

@@ -36,7 +36,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <InfoCard label="Total Users"    value={users.length}   icon={Users}    accent="blue"   />
         <InfoCard label="Total Drivers"  value={drivers.length} icon={Truck}    accent="sky"    />
-        <InfoCard label="Online Drivers" value={activeDrivers}  icon={Activity} accent="green"  />
+        <InfoCard label="Online Drivers" value={onlineDrivers}  icon={Activity} accent="green"  />
         <InfoCard label="Active Orders"  value={activeOrders}   icon={Package}  accent="orange" />
       </div>
 
@@ -44,29 +44,55 @@ export default function AdminDashboard() {
         {/* Recent Users */}
         <div className="card">
           <h2 className="text-base font-semibold text-white mb-4">Recent Users</h2>
-          {loading ? <p className="text-slate-500 text-sm">Loading...</p> : (
+          {loading ? (
+            <p className="text-slate-500 text-sm">Loading...</p>
+          ) : (
             <div className="space-y-2">
-              {users.slice(-6).reverse().map((u) => (
-                <div key={u.id} className="flex items-center justify-between py-2 border-b border-surface-border/40 last:border-0">
-                  <div>
-                    <p className="text-sm text-white">{u.fullName ?? u.email}</p>
-                    <p className="text-xs text-slate-500">{u.email}</p>
+              {users.slice(-6).reverse().map((u) => {
+                const driver = drivers.find(d => d.user?.id === u.id);
+
+                console.log("USER:", u);
+                  console.log("MATCHED DRIVER:", driver);
+
+                return (
+                  <div key={u.id} className="flex items-center justify-between py-2 border-b border-surface-border/40 last:border-0">
+
+                    <div>
+                      <p className="text-sm text-white">{u.fullName ?? u.email}</p>
+                      <p className="text-xs text-slate-500">{u.email}</p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+
+                      <span className={`badge border text-[10px]
+                        ${u.role === 'ROLE_ADMIN'  ? 'text-purple-400 bg-purple-400/10 border-purple-400/30' :
+                          u.role === 'ROLE_DRIVER' ? 'text-sky-400 bg-sky-400/10 border-sky-400/30' :
+                          'text-slate-300 bg-slate-700/30 border-slate-600/30'}`}>
+                        {u.role?.replace('ROLE_', '')}
+                      </span>
+
+                      <span className={`badge border text-[10px]
+                        ${
+                          u.role === 'ROLE_DRIVER'
+                            ? driver?.availability === 'ONLINE'
+                              ? 'text-green-400 bg-green-400/10 border-green-400/30'
+                              : 'text-red-400 bg-red-400/10 border-red-400/30'
+                            : u.active
+                              ? 'text-green-400 bg-green-400/10 border-green-400/30'
+                              : 'text-red-400 bg-red-400/10 border-red-400/30'
+                        }`}
+                      >
+                        {
+                          u.role === 'ROLE_DRIVER'
+                            ? (driver?.availability === 'ONLINE' ? 'Online' : 'Offline')
+                            : (u.active ? 'Online' : 'Offline')
+                        }
+                      </span>
+
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`badge border text-[10px]
-                      ${u.role === 'ROLE_ADMIN'  ? 'text-purple-400 bg-purple-400/10 border-purple-400/30' :
-                        u.role === 'ROLE_DRIVER' ? 'text-sky-400 bg-sky-400/10 border-sky-400/30' :
-                        'text-slate-300 bg-slate-700/30 border-slate-600/30'}`}>
-                      {u.role?.replace('ROLE_', '')}
-                    </span>
-                    <span className={`badge border text-[10px]
-                      ${u.active !== false ? 'text-green-400 bg-green-400/10 border-green-400/30' :
-                                             'text-red-400 bg-red-400/10 border-red-400/30'}`}>
-                      {u.active !== false ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -85,10 +111,10 @@ export default function AdminDashboard() {
                   <div className="flex items-center gap-2">
 
                     <span className={`badge border text-[10px]
-                      ${d.user?.active !== false
+                      ${d.availability === 'ONLINE'
                         ? 'text-green-400 bg-green-400/10 border-green-400/30'
                         : 'text-red-400 bg-red-400/10 border-red-400/30'}`}>
-                      {d.user?.active !== false ? 'Active' : 'Inactive'}
+                      {d.availability === 'ONLINE' ? 'Online' : 'Offline'}
                     </span>
                   </div>
                 </div>

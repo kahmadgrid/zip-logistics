@@ -10,6 +10,7 @@ export default function UsersPage() {
   const [users,   setUsers]   = useState([]);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState({});
+  const [drivers, setDrivers] = useState([]);
 
   const fetchUsers = () => {
     setLoading(true);
@@ -21,18 +22,19 @@ export default function UsersPage() {
 
   useEffect(() => { fetchUsers(); }, []);
 
-  const handleToggle = async (userId, currentActive) => {
-    setToggling(p => ({ ...p, [userId]: true }));
-    try {
-      await adminService.setUserActive(userId, !currentActive);
-      toast.success(`User ${!currentActive ? 'activated' : 'deactivated'}`);
-      fetchUsers();
-    } catch (err) {
-      toast.error(getErrMsg(err));
-    } finally {
-      setToggling(p => ({ ...p, [userId]: false }));
-    }
-  };
+  useEffect(() => {
+    setLoading(true);
+
+    Promise.all([
+      adminService.getUsers(),
+      adminService.getDrivers()
+    ])
+      .then(([uRes, dRes]) => {
+        setUsers(uRes.data ?? []);
+        setDrivers(dRes.data ?? []); // 👈 NEW
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   const columns = [
     { key: 'id',       label: 'ID',
@@ -53,29 +55,30 @@ export default function UsersPage() {
         </span>
       )},
     { key: 'active',   label: 'Status',
-      render: (v) => (
-        <span className={`badge border text-[10px]
-          ${v !== false ? 'text-green-400 bg-green-400/10 border-green-400/30'
-                        : 'text-red-400 bg-red-400/10 border-red-400/30'}`}>
-          {v !== false ? 'Active' : 'Inactive'}
-        </span>
-      )},
-    { key: 'id',       label: 'Action',
-      render: (v, row) => (
-        <button
-          onClick={() => handleToggle(v, row.active)}
-          disabled={toggling[v]}
-          className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-all
-            ${row.active !== false
-              ? 'text-red-400 border-red-500/30 hover:bg-red-500/10'
-              : 'text-green-400 border-green-500/30 hover:bg-green-500/10'}`}
-        >
-          {toggling[v]
-            ? <Loader2 size={12} className="animate-spin" />
-            : row.active !== false ? <UserX size={12} /> : <UserCheck size={12} />}
-          {row.active !== false ? 'Deactivate' : 'Activate'}
-        </button>
-      )},
+      render: (v, row) => {
+        const driver = drivers.find(d => d.user?.id === row.id);
+
+        return (
+          <span className={`badge border text-[10px]
+            ${
+              row.role === 'ROLE_DRIVER'
+                ? (driver?.availability === 'ONLINE'
+                    ? 'text-green-400 bg-green-400/10 border-green-400/30'
+                    : 'text-red-400 bg-red-400/10 border-red-400/30')
+                : (row.active !== false
+                    ? 'text-green-400 bg-green-400/10 border-green-400/30'
+                    : 'text-red-400 bg-red-400/10 border-red-400/30')
+            }`}
+          >
+            {
+              row.role === 'ROLE_DRIVER'
+                ? (driver?.availability === 'ONLINE' ? 'Online' : 'Offline')
+                : (row.active !== false ? 'Online' : 'Offline')
+            }
+          </span>
+        );
+      }
+  }
   ];
 
   return (

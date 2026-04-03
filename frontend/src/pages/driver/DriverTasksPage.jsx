@@ -290,16 +290,42 @@ function TaskCard({ task, tabMode, isExpanded, onToggle, acting, onAccept, onSta
           {nextStatus ? (
             <div>
               <p className="label mb-2">Next Step</p>
-              <button
-                onClick={() => onStatus(nextStatus)}
-                disabled={!!acting}
-                className="btn-primary text-sm"
-              >
-                {acting === 'status'
-                  ? <Loader2 size={14} className="animate-spin" />
-                  : <CheckCircle size={14} />}
-                Move to: {nextStatus.replace(/_/g, ' ')}
-              </button>
+              <div className="flex gap-2 flex-wrap">
+                    {/* Move Status Button */}
+                    <button
+                      onClick={() => onStatus(nextStatus)}
+                      disabled={!!acting}
+                      className="btn-primary text-sm"
+                    >
+                      {acting === 'status'
+                        ? <Loader2 size={14} className="animate-spin" />
+                        : <CheckCircle size={14} />}
+                      Move to: {nextStatus.replace(/_/g, ' ')}
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (!navigator.geolocation) {
+                          return toast.error("Geolocation not supported");
+                        }
+
+                        navigator.geolocation.getCurrentPosition(
+                          (pos) => {
+                            const driver = `${pos.coords.latitude},${pos.coords.longitude}`;
+                            const pickup = encodeURIComponent(task.pickupAddress);
+                            const drop = encodeURIComponent(task.dropAddress);
+                            const url = `https://www.google.com/maps/dir/?api=1&origin=${driver}&destination=${drop}&waypoints=${pickup}&travelmode=driving`;
+
+                            window.open(url, "_blank");
+                          },
+                          () => toast.error("Location permission denied")
+                        );
+                      }}
+                      className="btn-secondary text-sm flex items-center gap-1"
+                    >
+                      <Navigation size={14} />
+                      View Route
+                    </button>
+                  </div>
             </div>
           ) : (
             <p className="text-xs text-green-400 flex items-center gap-1.5">

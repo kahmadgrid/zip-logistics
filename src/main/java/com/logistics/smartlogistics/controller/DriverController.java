@@ -115,31 +115,6 @@ public class DriverController {
         DeliveryStatus newStatus = DeliveryStatus.valueOf(payload.get("status"));
         DeliveryStatus oldStatus = order.getStatus();
 
-        // Warehouse load management on key transitions for flows that involve warehouses
-        if (oldStatus == DeliveryStatus.AT_ORIGIN_WAREHOUSE && newStatus == DeliveryStatus.IN_TRANSIT) {
-            if (order.getWarehouse() != null) {
-                var origin = order.getWarehouse();
-                origin.setCurrentLoad(origin.getCurrentLoad() - 1);
-                warehouseRepository.save(origin);
-            }
-        }
-
-        if (newStatus == DeliveryStatus.AT_DESTINATION_WAREHOUSE) {
-            if (order.getDestinationWarehouse() != null) {
-                var dest = order.getDestinationWarehouse();
-                dest.setCurrentLoad(dest.getCurrentLoad() + 1);
-                warehouseRepository.save(dest);
-            }
-        }
-
-        if (oldStatus == DeliveryStatus.AT_DESTINATION_WAREHOUSE && newStatus == DeliveryStatus.OUT_FOR_DELIVERY) {
-            if (order.getDestinationWarehouse() != null) {
-                var dest = order.getDestinationWarehouse();
-                dest.setCurrentLoad(dest.getCurrentLoad() - 1);
-                warehouseRepository.save(dest);
-            }
-        }
-
         order.setStatus(newStatus);
         return deliveryOrderRepository.save(order);
     }

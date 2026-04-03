@@ -69,7 +69,6 @@ export default function DriverDashboard() {
     const fetchProfile = async () => {
       try {
         const data = await driverService.getMyProfile();
-        console.log("Profile API:", data);
 
         if (!data) {
           // No profile yet → treat as OFFLINE

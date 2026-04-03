@@ -46,7 +46,7 @@ public class BatchService {
                 .findByWarehouseAndDestinationWarehouseAndStatusAndBatchIsNull(
                         originWarehouse,
                         destinationWarehouse,
-                        DeliveryStatus.AT_ORIGIN_WAREHOUSE
+                        DeliveryStatus.PICKED_UP
                 );
 
         if (candidates.isEmpty()) {

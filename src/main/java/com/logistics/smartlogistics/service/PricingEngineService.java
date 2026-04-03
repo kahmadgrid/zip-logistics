@@ -2,7 +2,8 @@ package com.logistics.smartlogistics.service;
 
 import com.logistics.smartlogistics.dto.RouteResponse;
 import com.logistics.smartlogistics.enums.DeliveryType;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.logistics.smartlogistics.enums.VehicleType;
+import com.logistics.smartlogistics.utils.VehicleUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -31,7 +32,7 @@ public class PricingEngineService {
     private static final double GST_RATE = 0.18;
 
     /**
-     * MAIN METHOD
+     * ✅ MAIN METHOD (vehicle-aware pricing)
      */
     public BigDecimal estimatePrice(
             DeliveryType deliveryType,
@@ -39,7 +40,8 @@ public class PricingEngineService {
             double lengthCm,
             double breadthCm,
             double heightCm,
-            double distanceKm
+            double distanceKm,
+            VehicleType vehicleType
     ) {
 
         // 📦 1. Volumetric weight
@@ -53,8 +55,12 @@ public class PricingEngineService {
         double ratePerKg  = deliveryType == DeliveryType.EXPRESS ? RATE_EXPRESS : RATE_STANDARD;
         double perKmRate  = deliveryType == DeliveryType.EXPRESS ? PER_KM_EXPRESS : PER_KM_STANDARD;
 
-        double weightCharge   = chargeableKg * ratePerKg;
-        double distanceCharge = distanceKm * perKmRate;
+        double weightCharge = chargeableKg * ratePerKg;
+
+        // 🚚 Vehicle-based extra pricing
+        double extraPerKm = getVehicleExtraPerKm(vehicleType);
+
+        double distanceCharge = distanceKm * (perKmRate + extraPerKm);
 
         // 🧾 4. Total
         double subtotal = base + weightCharge + distanceCharge;
@@ -65,16 +71,16 @@ public class PricingEngineService {
                 .setScale(2, RoundingMode.HALF_UP);
     }
 
-
+    // 🌍 Distance API
     @Value("${direction.api.key}")
     private String API_KEY;
+
     private final WebClient webClient = WebClient.create();
 
     public double calculateDistance(
             double startLat, double startLng,
             double endLat, double endLng
     ) {
-
 
         String url = "https://api.openrouteservice.org/v2/directions/driving-car";
 
@@ -96,18 +102,46 @@ public class PricingEngineService {
 
         double distanceMeters =
                 response.getRoutes().get(0).getSummary().getDistance();
-        System.out.println("Time ETA: "+ response.getRoutes().get(0).getSummary().getDuration()/60);
-        return distanceMeters / 1000.0; // ✅ convert to km
+
+        System.out.println("ETA (min): " +
+                response.getRoutes().get(0).getSummary().getDuration() / 60);
+
+        return distanceMeters / 1000.0;
     }
 
     /**
-     * 🔁 Optional fallback (if dimensions not provided)
+     * 🔁 Fallback method (no dimensions)
      */
     public BigDecimal estimatePrice(
             DeliveryType deliveryType,
             double distanceKm,
             double weightKg
     ) {
-        return estimatePrice(deliveryType, weightKg, 0, 0, 0, distanceKm);
+
+        // ✅ FIX: give safe default dimensions instead of 0
+        VehicleType vehicle = VehicleUtil.suggestVehicle(
+                weightKg,
+                10, 10, 10   // instead of 0,0,0 (more realistic)
+        );
+
+        return estimatePrice(
+                deliveryType,
+                weightKg,
+                10, 10, 10,
+                distanceKm,
+                vehicle
+        );
+    }
+
+    /**
+     * 🚚 Vehicle pricing logic
+     */
+    private double getVehicleExtraPerKm(VehicleType vehicleType) {
+        return switch (vehicleType) {
+            case BIKE -> 0;
+            case SCOOTER -> 2;
+            case MINI_TRUCK -> 20;
+            case TRUCK -> 50;
+        };
     }
 }

@@ -12,7 +12,7 @@ import api from '../../services/api';
 import { ZONES, getErrMsg } from '../../utils/constants';
 
 /* ── constants ───────────────────────── */
-const VEHICLE_TYPES = ['Van', 'Bike', 'Truck', 'Car', 'Auto'];
+const VEHICLE_TYPES = ['BIKE', 'SCOOTER', 'MINI_TRUCK', 'TRUCK'];
 const AVAILABILITY = ['ONLINE', 'OFFLINE'];
 
 const INIT = {

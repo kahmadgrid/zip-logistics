@@ -6,9 +6,11 @@ import com.logistics.smartlogistics.entity.DeliveryOrder;
 import com.logistics.smartlogistics.entity.Warehouse;
 import com.logistics.smartlogistics.enums.DeliveryStatus;
 import com.logistics.smartlogistics.enums.DeliveryType;
+import com.logistics.smartlogistics.enums.VehicleType;
 import com.logistics.smartlogistics.repository.AppUserRepository;
 import com.logistics.smartlogistics.repository.DeliveryOrderRepository;
 import com.logistics.smartlogistics.repository.WarehouseRepository;
+import com.logistics.smartlogistics.utils.VehicleUtil;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -64,7 +66,7 @@ public class BookingService {
                     .orElseThrow(() -> new IllegalArgumentException("Drop zone not serviceable"));
         }
 
-        // 📍 Get pickup location
+        // 📍 Pickup location
         GeocodingService.GeoPoint pickupPoint;
         if (request.pickupLatitude() != null && request.pickupLongitude() != null) {
             pickupPoint = new GeocodingService.GeoPoint(
@@ -75,11 +77,11 @@ public class BookingService {
             pickupPoint = geocodingService.geocode(request.pickupAddress());
         }
 
-        // 📍 Get drop location
+        // 📍 Drop location
         GeocodingService.GeoPoint dropPoint =
                 geocodingService.geocode(request.dropAddress());
 
-        // 📏 Calculate distance
+        // 📏 Distance
         double distanceKm = pricingEngineService.calculateDistance(
                 pickupPoint.latitude(), pickupPoint.longitude(),
                 dropPoint.latitude(), dropPoint.longitude()
@@ -99,17 +101,31 @@ public class BookingService {
         order.setReceiverName(request.receiverName());
         order.setReceiverMobile(request.receiverMobile());
 
+        // 📦 Dimensions
         order.setWeightKg(request.weightKg());
         order.setLengthCm(request.lengthCm());
         order.setBreadthCm(request.breadthCm());
         order.setHeightCm(request.heightCm());
 
+        // 🚚 NEW: Vehicle suggestion (CORE LOGIC)
+        VehicleType vehicle = VehicleUtil.suggestVehicle(
+                request.weightKg(),
+                request.lengthCm(),
+                request.breadthCm(),
+                request.heightCm()
+        );
+        order.setSuggestedVehicle(
+                vehicle
+        );
+        System.out.println(order.getSuggestedVehicle());
+
+        // 📍 Coordinates
         order.setPickupLatitude(pickupPoint.latitude());
         order.setPickupLongitude(pickupPoint.longitude());
         order.setDropLatitude(dropPoint.latitude());
         order.setDropLongitude(dropPoint.longitude());
 
-        // 💰 NEW PRICING (DISTANCE BASED)
+        // 💰 Pricing
         order.setEstimatedPrice(
                 pricingEngineService.estimatePrice(
                         request.deliveryType(),
@@ -117,7 +133,8 @@ public class BookingService {
                         request.lengthCm(),
                         request.breadthCm(),
                         request.heightCm(),
-                        distanceKm
+                        distanceKm,
+                        vehicle
                 )
         );
 
@@ -132,9 +149,10 @@ public class BookingService {
             warehouseRepository.save(originWarehouse);
         }
 
+        // 💾 Save order
         DeliveryOrder saved = deliveryOrderRepository.save(order);
 
-        // 🚚 Notify drivers (polling based)
+        // 🚚 Match drivers (now vehicle-aware)
         matchingEngineService.rankAvailableDrivers(saved);
 
         return new BookingDtos.BookingResponse(
@@ -144,7 +162,6 @@ public class BookingService {
                 saved.getEstimatedPrice()
         );
     }
-
     public List<DeliveryOrder> userOrders(String customerEmail) {
         Long customerId = appUserRepository.findByEmail(customerEmail)
                 .orElseThrow()

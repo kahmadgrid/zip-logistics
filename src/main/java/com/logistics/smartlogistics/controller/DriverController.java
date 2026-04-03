@@ -43,8 +43,26 @@ public class DriverController {
 
     @GetMapping("/tasks")
     public List<DeliveryOrder> myTasks(Authentication authentication) {
+
         DriverProfile driver = getDriver(authentication);
-        return deliveryOrderRepository.findByPickupZoneAndStatus(driver.getCurrentZone(), DeliveryStatus.CREATED);
+
+        List<DeliveryOrder> orders =
+                deliveryOrderRepository.findByPickupZoneAndStatus(
+                        driver.getCurrentZone(),
+                        DeliveryStatus.CREATED
+                );
+
+        // ✅ FILTER BASED ON VEHICLE CAPACITY
+        return orders.stream()
+                .filter(order ->
+                        driver.getVehicleType().canCarry(
+                                order.getWeightKg(),
+                                order.getLengthCm(),
+                                order.getBreadthCm(),
+                                order.getHeightCm()
+                        )
+                )
+                .toList();
     }
 
     @GetMapping("/tasks/assigned")
@@ -77,24 +95,44 @@ public class DriverController {
 
     @PostMapping("/tasks/{orderId}/accept")
     public DeliveryOrder acceptOrder(@PathVariable Long orderId, Authentication authentication) {
+
         DriverProfile driver = getDriver(authentication);
         DeliveryOrder order = deliveryOrderRepository.findById(orderId).orElseThrow();
 
+        // ✅ 1. Status check
         if (order.getStatus() != DeliveryStatus.CREATED) {
             throw new IllegalArgumentException("Order is not in CREATED state");
         }
+
+        // ✅ 2. Zone check
         if (!order.getPickupZone().equals(driver.getCurrentZone())) {
             throw new IllegalArgumentException("Order not in your zone");
         }
+
+        // ✅ 3. Driver availability
         if (driver.getAvailability() != com.logistics.smartlogistics.enums.DriverAvailability.ONLINE) {
             throw new IllegalArgumentException("Driver is not ONLINE");
         }
+
+        // ✅ 4. Already assigned check
         if (order.getDriver() != null) {
             throw new IllegalArgumentException("Order already assigned");
         }
 
+        // 🚚 5. VEHICLE VALIDATION (🔥 MOST IMPORTANT)
+        if (!driver.getVehicleType().canCarry(
+                order.getWeightKg(),
+                order.getLengthCm(),
+                order.getBreadthCm(),
+                order.getHeightCm()
+        )) {
+            throw new IllegalArgumentException("Your vehicle cannot carry this order");
+        }
+
+        // ✅ 6. Assign order
         order.setDriver(driver);
         order.setStatus(DeliveryStatus.DRIVER_ASSIGNED);
+
         return deliveryOrderRepository.save(order);
     }
 

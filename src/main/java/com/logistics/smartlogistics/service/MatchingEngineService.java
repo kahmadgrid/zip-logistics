@@ -29,22 +29,33 @@ public class MatchingEngineService {
                         DriverAvailability.ONLINE
                 );
 
-        return candidates.stream()
+        if (candidates.isEmpty()) return List.of();
 
-                // ✅ ONLY ELIGIBLE VEHICLES
+        // ✅ Step 1: Exact vehicle match (BEST CASE)
+        List<DriverProfile> exactMatch = candidates.stream()
                 .filter(driver ->
-                        driver.getVehicleType().canCarry(
-                                order.getWeightKg(),
-                                order.getLengthCm(),
-                                order.getBreadthCm(),
-                                order.getHeightCm()
-                        )
+                        driver.getVehicleType() == order.getSuggestedVehicle()
                 )
-
-                // ✅ SORT BEST DRIVER
                 .sorted(Comparator.comparingDouble(d -> score(order, d)))
+                .collect(Collectors.toList());
 
-                .toList();
+        if (!exactMatch.isEmpty()) {
+            System.out.println("exact matches"+exactMatch);
+            return exactMatch;
+        }
+
+        // ✅ Step 2: Fallback → bigger vehicles
+        return candidates.stream()
+                .filter(driver ->
+                        driver.getVehicleType().ordinal() > order.getSuggestedVehicle().ordinal()
+                )
+                .sorted(Comparator.comparingDouble(d -> score(order, d)))
+                .peek(driver -> System.out.println(
+                        "Driver: " + driver.getId() +
+                                " | Vehicle: " + driver.getVehicleType() +
+                                " | Score: " + score(order, driver)
+                ))
+                .collect(Collectors.toList());
     }
 
     private double score(DeliveryOrder order, DriverProfile driver) {

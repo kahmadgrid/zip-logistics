@@ -1,5 +1,4 @@
 package com.logistics.smartlogistics.controller;
-
 import com.logistics.smartlogistics.dto.TrackingDtos;
 import com.logistics.smartlogistics.dto.DriverDtos;
 import com.logistics.smartlogistics.entity.DeliveryOrder;
@@ -30,10 +29,10 @@ public class DriverController {
     private final TrackingService trackingService;
 
     public DriverController(DeliveryOrderRepository deliveryOrderRepository,
-                             AppUserRepository appUserRepository,
-                             DriverProfileRepository driverProfileRepository,
-                             WarehouseRepository warehouseRepository,
-                             TrackingService trackingService) {
+                            AppUserRepository appUserRepository,
+                            DriverProfileRepository driverProfileRepository,
+                            WarehouseRepository warehouseRepository,
+                            TrackingService trackingService) {
         this.deliveryOrderRepository = deliveryOrderRepository;
         this.appUserRepository = appUserRepository;
         this.driverProfileRepository = driverProfileRepository;
@@ -55,15 +54,13 @@ public class DriverController {
         // ✅ FILTER BASED ON VEHICLE CAPACITY
         return orders.stream()
                 .filter(order ->
-                        driver.getVehicleType().canCarry(
-                                order.getWeightKg(),
-                                order.getLengthCm(),
-                                order.getBreadthCm(),
-                                order.getHeightCm()
-                        )
+                        driver.getVehicleType() == order.getSuggestedVehicle()
                 )
                 .toList();
     }
+
+
+
 
     @GetMapping("/tasks/assigned")
     public List<DeliveryOrder> myAssignedTasks(Authentication authentication) {
@@ -73,7 +70,7 @@ public class DriverController {
 
     @PostMapping("/profile")
     public DriverProfile createOrUpdateProfile(@Valid @RequestBody DriverDtos.CreateOrUpdateDriverProfileRequest request,
-                                                  Authentication authentication) {
+                                               Authentication authentication) {
         var user = appUserRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
@@ -138,8 +135,8 @@ public class DriverController {
 
     @PatchMapping("/tasks/{orderId}/status")
     public DeliveryOrder updateStatus(@PathVariable Long orderId,
-                                       @RequestBody Map<String, String> payload,
-                                       Authentication authentication) {
+                                      @RequestBody Map<String, String> payload,
+                                      Authentication authentication) {
         DriverProfile driver = getDriver(authentication);
         DeliveryOrder order = deliveryOrderRepository.findById(orderId).orElseThrow();
 
@@ -221,7 +218,6 @@ public class DriverController {
 
         user.setActive(true);
         appUserRepository.save(user);
-
         return ResponseEntity.ok("Account activated");
     }
 

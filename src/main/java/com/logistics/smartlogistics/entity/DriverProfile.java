@@ -50,4 +50,19 @@ public class DriverProfile {
 
     @Column
     private String vehicleNumber;
+
+    @Override
+    public String toString() {
+        return "DriverProfile{" +
+                "id=" + id +
+                ", user=" + user +
+                ", vehicleType=" + vehicleType +
+                ", rating=" + rating +
+                ", availability=" + availability +
+                ", currentZone='" + currentZone + '\'' +
+                ", currentLatitude=" + currentLatitude +
+                ", currentLongitude=" + currentLongitude +
+                ", vehicleNumber='" + vehicleNumber + '\'' +
+                '}';
+    }
 }

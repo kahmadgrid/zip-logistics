@@ -30,11 +30,11 @@ export const driverService = {
       status,
     }).then(res => res.data),
 
-    deactivateAccount: () =>
-      api.put('/api/driver/deactivate').then(res => res.data),
+    goOffline: () =>
+      api.put('/api/driver/go-offline').then(res => res.data),
 
-    activateAccount: () =>
-      api.put('/api/driver/activate').then(res => res.data),
+    goOnline: () =>
+      api.put('/api/driver/go-online').then(res => res.data),
 };
 
 

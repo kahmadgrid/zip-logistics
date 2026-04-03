@@ -13,29 +13,33 @@ export default function DriverDashboard() {
   const [available, setAvailable] = useState([]);
   const [assigned,  setAssigned]  = useState([]);
   const [loading,   setLoading]   = useState(true);
-  const [isActive, setIsActive] = useState(null);
+  const [isOnline, setIsOnline] = useState(null);
 
   useEffect(() => {
-    if (isActive === null) {
-      return;
-    }
-
-    if (!isActive) {
-        setLoading(false);
-        return;
-      }
+    if (isOnline === null) return;
 
     setLoading(true);
+
     Promise.allSettled([
-      driverService.getAvailableTasks(),
-      driverService.getAssignedTasks(),
+      isOnline ? driverService.getAvailableTasks() : isOnline ? driverService.getAvailableTasks() : { status: 'fulfilled', value: [] },
+      driverService.getAssignedTasks(), // ✅ ALWAYS call
     ])
       .then(([avail, assign]) => {
-        setAvailable(avail.status === 'fulfilled' && Array.isArray(avail.value) ? avail.value : []);
-        setAssigned(assign.status === 'fulfilled' && Array.isArray(assign.value) ? assign.value : []);
+        setAvailable(
+          avail.status === 'fulfilled' && Array.isArray(avail.value)
+            ? avail.value
+            : []
+        );
+
+        setAssigned(
+          assign.status === 'fulfilled' && Array.isArray(assign.value)
+            ? assign.value
+            : []
+        );
       })
       .finally(() => setLoading(false));
-  }, [isActive]);
+
+  }, [isOnline]);
 
     useEffect(() => {
       fetchProfile();
@@ -46,22 +50,17 @@ export default function DriverDashboard() {
 
   const active    = assigned.filter(t => ACTIVE_STATUSES.includes(t.status));
   const completed = assigned.filter(t => COMPLETE_STATUSES.includes(t.status));
-  const handleToggleAccount = async () => {
+
+  const handleToggleAvailability = async () => {
     try {
-      console.log("Before toggle:", isActive);
+      if (isOnline) {
+        await driverService.goOffline();
 
-      if (isActive) {
-        console.log("Calling deactivate API");
-        await driverService.deactivateAccount();
+        setIsOnline(false);
       } else {
-        console.log("Calling activate API");
-        await driverService.activateAccount();
+        await driverService.goOnline();
+        setIsOnline(true);
       }
-
-      console.log("After API call");
-
-      await fetchProfile();
-
     } catch (err) {
       console.log("ERROR:", err);
     }
@@ -72,8 +71,13 @@ export default function DriverDashboard() {
         const data = await driverService.getMyProfile();
         console.log("Profile API:", data);
 
-        setIsActive(Boolean(data?.user?.active)); // ✅ FIX
+        if (!data) {
+          // No profile yet → treat as OFFLINE
+          setIsOnline(false);
+          return;
+        }
 
+        setIsOnline(data.availability === 'ONLINE');
       } catch (err) {
         console.error(err);
       }
@@ -81,9 +85,9 @@ export default function DriverDashboard() {
 
   return (
     <DashboardLayout>
-        {!isActive && (
+        {isOnline == false && (
           <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm text-center">
-            Your account is deactivated. Activate to continue working.
+            You are offline. You can still use the app, but you won’t receive new orders.
           </div>
         )}
       <div className="page-header flex items-center justify-between">
@@ -93,14 +97,19 @@ export default function DriverDashboard() {
         </div>
         <div className="flex items-center gap-3">
             <button
-              onClick={handleToggleAccount}
+              onClick={handleToggleAvailability}
+              disabled={isOnline === null}
               className={`btn-secondary ${
-                isActive
-                  ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
-                  : 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
+                isOnline
+                  ? 'bg-red-500/20 text-red-400'
+                  : 'bg-green-500/20 text-green-400'
               }`}
             >
-              {isActive ? 'Deactivate' : 'Activate'}
+              {isOnline === null
+                ? 'Loading...'
+                : isOnline
+                  ? 'Go Offline'
+                  : 'Go Online'}
             </button>
 
             <Link to="/driver/profile" className="btn-secondary flex items-center gap-1">

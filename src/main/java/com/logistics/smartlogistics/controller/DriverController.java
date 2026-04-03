@@ -45,6 +45,7 @@ public class DriverController {
 
         DriverProfile driver = getDriver(authentication);
 
+
         List<DeliveryOrder> orders =
                 deliveryOrderRepository.findByPickupZoneAndStatus(
                         driver.getCurrentZone(),
@@ -57,6 +58,12 @@ public class DriverController {
                         driver.getVehicleType() == order.getSuggestedVehicle()
                 )
                 .toList();
+
+        if (driver.getAvailability() != com.logistics.smartlogistics.enums.DriverAvailability.ONLINE) {
+            return List.of();
+        }
+        return deliveryOrderRepository.findByPickupZoneAndStatus(driver.getCurrentZone(), DeliveryStatus.CREATED);
+
     }
 
 
@@ -210,25 +217,37 @@ public class DriverController {
                 .orElseThrow(() -> new IllegalArgumentException("Driver profile not created"));
     }
 
-    @PutMapping("/activate")
-    public ResponseEntity<?> activate(Authentication authentication) {
+    @PutMapping("/go-online")
+    public ResponseEntity<?> goOnline(Authentication authentication) {
 
-        var user = appUserRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        DriverProfile driver = getDriver(authentication);
 
+<<<<<<< HEAD
         user.setActive(true);
         appUserRepository.save(user);
         return ResponseEntity.ok("Account activated");
+=======
+        driver.setAvailability(
+                com.logistics.smartlogistics.enums.DriverAvailability.ONLINE
+        );
+
+        driverProfileRepository.save(driver);
+
+        return ResponseEntity.ok("Driver is ONLINE");
+>>>>>>> origin/main
     }
 
-    @PutMapping("/deactivate")
-    public ResponseEntity<?> deactivate(Authentication authentication) {
-        var user = appUserRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    @PutMapping("/go-offline")
+    public ResponseEntity<?> goOffline(Authentication authentication) {
 
-        user.setActive(false);
-        appUserRepository.save(user);
+        DriverProfile driver = getDriver(authentication);
 
-        return ResponseEntity.ok("Account deactivated");
+        driver.setAvailability(
+                com.logistics.smartlogistics.enums.DriverAvailability.OFFLINE
+        );
+
+        driverProfileRepository.save(driver);
+
+        return ResponseEntity.ok("Driver is OFFLINE");
     }
 }

@@ -14,17 +14,15 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Auto-logout on 401
+// Auto-logout only on 401 (unauthenticated / expired token).
+// 403 means "forbidden for this user" — logging out is confusing and wrong for that case.
 api.interceptors.response.use(
   (res) => res,
   (err) => {
     const isLoginPage = window.location.pathname === '/login';
 
-    if (
-      (err.response?.status === 401 || err.response?.status === 403) &&
-      !isLoginPage
-    ) {
-      if (onLogout) onLogout(); // ✅ call logout from context
+    if (err.response?.status === 401 && !isLoginPage) {
+      if (onLogout) onLogout();
     }
 
     return Promise.reject(err);

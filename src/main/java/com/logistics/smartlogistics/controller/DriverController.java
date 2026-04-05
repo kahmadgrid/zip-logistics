@@ -10,6 +10,7 @@ import com.logistics.smartlogistics.repository.AppUserRepository;
 import com.logistics.smartlogistics.repository.DriverProfileRepository;
 import com.logistics.smartlogistics.repository.DeliveryOrderRepository;
 import com.logistics.smartlogistics.repository.WarehouseRepository;
+import com.logistics.smartlogistics.service.NotificationService;
 import com.logistics.smartlogistics.service.TrackingService;
 
 import org.springframework.http.ResponseEntity;
@@ -32,17 +33,20 @@ public class DriverController {
     private final DriverProfileRepository driverProfileRepository;
     private final WarehouseRepository warehouseRepository;
     private final TrackingService trackingService;
+    private final NotificationService notificationService;
 
     public DriverController(DeliveryOrderRepository deliveryOrderRepository,
                             AppUserRepository appUserRepository,
                             DriverProfileRepository driverProfileRepository,
                             WarehouseRepository warehouseRepository,
-                            TrackingService trackingService) {
+                            TrackingService trackingService,
+                            NotificationService notificationService) {
         this.deliveryOrderRepository = deliveryOrderRepository;
         this.appUserRepository = appUserRepository;
         this.driverProfileRepository = driverProfileRepository;
         this.warehouseRepository = warehouseRepository;
         this.trackingService = trackingService;
+        this.notificationService = notificationService;
     }
 
     // ===================== TASKS =====================
@@ -158,8 +162,14 @@ public class DriverController {
 
         order.setDriver(driver);
         order.setStatus(DeliveryStatus.DRIVER_ASSIGNED);
+        DeliveryOrder savedOrder = deliveryOrderRepository.save(order);
 
-        return deliveryOrderRepository.save(order);
+        notificationService.notifyUser(
+                savedOrder.getCustomer().getId(),
+                String.format("🚚 [Parcel #%d] Driver assigned to your order", savedOrder.getId())
+        );
+
+        return savedOrder;
     }
 
     @PatchMapping("/tasks/{orderId}/status")
@@ -208,6 +218,23 @@ public class DriverController {
         }
 
         order.setStatus(newStatus);
+
+        long parcelId = order.getId();
+        String message = switch (newStatus) {
+            case DRIVER_ASSIGNED -> String.format("🚚 [Parcel #%d] Driver assigned to your order", parcelId);
+            case PICKED_UP -> String.format("📦 [Parcel #%d] Parcel picked up", parcelId);
+            case IN_TRANSIT -> String.format("🚛 [Parcel #%d] Parcel is in transit", parcelId);
+            case AT_ORIGIN_WAREHOUSE -> String.format("🏭 [Parcel #%d] Reached origin warehouse", parcelId);
+            case AT_DESTINATION_WAREHOUSE -> String.format("📍 [Parcel #%d] Reached destination warehouse", parcelId);
+            case OUT_FOR_DELIVERY -> String.format("🚚 [Parcel #%d] Out for delivery", parcelId);
+            case DELIVERED -> String.format("✅ [Parcel #%d] Parcel delivered successfully", parcelId);
+            default -> null;
+        };
+
+        if (message != null) {
+            notificationService.notifyUser(order.getCustomer().getId(), message);
+        }
+
         return deliveryOrderRepository.save(order);
     }
 
@@ -265,4 +292,5 @@ public class DriverController {
         return driverProfileRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Driver profile not created"));
     }
+
 }

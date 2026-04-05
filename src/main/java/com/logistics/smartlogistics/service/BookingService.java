@@ -25,19 +25,22 @@ public class BookingService {
     private final MatchingEngineService matchingEngineService;
     private final WarehouseRepository warehouseRepository;
     private final GeocodingService geocodingService;
+    private final NotificationService notificationService;
 
     public BookingService(DeliveryOrderRepository deliveryOrderRepository,
                           AppUserRepository appUserRepository,
                           PricingEngineService pricingEngineService,
                           MatchingEngineService matchingEngineService,
                           WarehouseRepository warehouseRepository,
-                          GeocodingService geocodingService) {
+                          GeocodingService geocodingService,
+                          NotificationService notificationService) {
         this.deliveryOrderRepository = deliveryOrderRepository;
         this.appUserRepository = appUserRepository;
         this.pricingEngineService = pricingEngineService;
         this.matchingEngineService = matchingEngineService;
         this.warehouseRepository = warehouseRepository;
         this.geocodingService = geocodingService;
+        this.notificationService = notificationService;
     }
 
     public BookingDtos.BookingResponse createBooking(String customerEmail, BookingDtos.BookingRequest request) {
@@ -155,12 +158,19 @@ public class BookingService {
         // 🚚 Match drivers (now vehicle-aware)
         matchingEngineService.rankAvailableDrivers(saved);
 
+        notificationService.notifyUser(
+                customer.getId(),
+                String.format("📦 [Parcel #%d] Your booking has been created", saved.getId())
+        );
+
         return new BookingDtos.BookingResponse(
                 saved.getId(),
                 saved.getDeliveryType(),
                 saved.getStatus(),
                 saved.getEstimatedPrice()
         );
+
+
     }
     public List<DeliveryOrder> userOrders(String customerEmail) {
         Long customerId = appUserRepository.findByEmail(customerEmail)

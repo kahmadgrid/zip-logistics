@@ -125,13 +125,17 @@ export default function TrackingPage() {
     if (!latest || !destination) return;
 
     const timeout = setTimeout(async () => {
+      // Debug logging to verify environment variable
+      console.log("API Key available:", !!process.env.REACT_APP_DIRECTIONS_API_KEY);
+      console.log("Coordinates:", [latest[1], latest[0]], [destination[1], destination[0]]);
+      
       try {
         const res = await fetch(
           "https://api.openrouteservice.org/v2/directions/driving-car/geojson",
           {
             method: "POST",
             headers: {
-              "Authorization": "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImIxNTcyOTViYTk5ODQ0NjBhNzc3NTRjZjIyZDkxOTBjIiwiaCI6Im11cm11cjY0In0=",
+              "Authorization": process.env.REACT_APP_DIRECTIONS_API_KEY,
               "Content-Type": "application/json"
             },
             body: JSON.stringify({
@@ -144,6 +148,15 @@ export default function TrackingPage() {
         );
 
         const data = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(`API Error: ${res.status} - ${data.message || 'Unknown error'}`);
+        }
+        
+        if (!data.features || data.features.length === 0) {
+          throw new Error('No route data received');
+        }
+        
         const durationSec = data.features[0].properties.summary.duration;
         setEta(durationSec / 60);
         console.log(data);
@@ -247,8 +260,6 @@ export default function TrackingPage() {
                       weight: 5
                     }}
                   />
-
-                  )}
 
                 </MapContainer>
               </div>

@@ -21,7 +21,9 @@ public class BookingDtos {
             double breadthCm,
             double heightCm,
             Double pickupLatitude,   // ← add this (nullable)
-            Double pickupLongitude   // ← add this (nullable)
+            Double pickupLongitude,  // ← add this (nullable)
+            Double dropLatitude,     // ← add this (nullable)
+            Double dropLongitude     // ← add this (nullable)
     ) {}
 
     public record BookingResponse(

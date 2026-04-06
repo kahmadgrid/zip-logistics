@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Truck, User, ArrowRight, BadgeCheck, Package } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
@@ -15,31 +15,76 @@ export default function DriverDashboard() {
   const [loading,   setLoading]   = useState(true);
   const [isOnline, setIsOnline] = useState(null);
 
-  useEffect(() => {
-    if (isOnline === null) return;
+  const [newOrder, setNewOrder] = useState(null);
+  const lastSeenIdRef = useRef(0);
+    const isFetchingRef = useRef(false);
 
-    setLoading(true);
+    useEffect(() => {
+      if (!user?.email || isOnline === null) return;
 
-    Promise.allSettled([
-      isOnline ? driverService.getAvailableTasks() : isOnline ? driverService.getAvailableTasks() : { status: 'fulfilled', value: [] },
-      driverService.getAssignedTasks(), // ✅ ALWAYS call
-    ])
-      .then(([avail, assign]) => {
-        setAvailable(
-          avail.status === 'fulfilled' && Array.isArray(avail.value)
-            ? avail.value
-            : []
-        );
+      const key = `driver_marker_${user.email}`;
 
-        setAssigned(
-          assign.status === 'fulfilled' && Array.isArray(assign.value)
-            ? assign.value
-            : []
-        );
-      })
-      .finally(() => setLoading(false));
+      // Sync Ref with localStorage only once on mount
+      if (lastSeenIdRef.current === 0) {
+        lastSeenIdRef.current = Number(localStorage.getItem(key)) || 0;
+      }
 
-  }, [isOnline]);
+      const pollData = async () => {
+        // Prevent overlapping requests
+        if (isFetchingRef.current) return;
+        isFetchingRef.current = true;
+
+        try {
+          const [availRes, assignRes] = await Promise.all([
+            isOnline ? driverService.getAvailableTasks() : Promise.resolve([]),
+            driverService.getAssignedTasks()
+          ]);
+
+          const availList = Array.isArray(availRes) ? availRes : [];
+          setAvailable(availList);
+          setAssigned(Array.isArray(assignRes) ? assignRes : []);
+
+          // 2. THE NOTIFICATION SHIELD
+          if (isOnline && availList.length > 0) {
+            // Find the absolute highest ID in the current available list
+            const maxOrder = availList.reduce((prev, curr) =>
+              (Number(curr.id) > Number(prev.id) ? curr : prev)
+            );
+
+            const currentMaxId = Number(maxOrder.id);
+
+            /**
+             * CRITICAL LOGIC:
+             * If currentMaxId (e.g. 15) > our high-water mark (e.g. 13):
+             * - Update the mark to 15 IMMEDIATELY.
+             * - Show the modal.
+             * If order 15 is then accepted and disappears, the next max is 14.
+             * Since 14 is NOT > 15, the shield blocks the notification.
+             */
+            if (currentMaxId > lastSeenIdRef.current) {
+
+              // Update storage and ref immediately BEFORE showing modal
+              lastSeenIdRef.current = currentMaxId;
+              localStorage.setItem(key, currentMaxId.toString());
+
+              // Only pop the window if it's actually 'CREATED'
+              if (maxOrder.status === 'CREATED') {
+                setNewOrder(maxOrder);
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Polling Error:", err);
+        } finally {
+          setLoading(false); // Stop "Loading" hang
+          isFetchingRef.current = false;
+        }
+      };
+
+      pollData();
+      const interval = setInterval(pollData, 5000);
+      return () => clearInterval(interval);
+    }, [isOnline, user?.email]);
 
     useEffect(() => {
       fetchProfile();
@@ -71,7 +116,6 @@ export default function DriverDashboard() {
         const data = await driverService.getMyProfile();
 
         if (!data) {
-          // No profile yet → treat as OFFLINE
           setIsOnline(false);
           return;
         }
@@ -192,6 +236,56 @@ export default function DriverDashboard() {
         </div>
 
       </div>
+
+      {newOrder && (
+        /* bg-slate-950/40: Dark slate at 40% opacity (less heavy than black/80)
+           backdrop-blur-[2px]: A very specific, tiny blur instead of the standard 'sm'
+        */
+        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-[2px] flex items-center justify-center z-[9999] p-4 transition-all duration-500">
+
+          <div className="bg-slate-900 border border-brand-500/30 p-6 rounded-2xl max-w-sm w-full shadow-2xl ring-1 ring-white/10">
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-brand-500/10 p-2 rounded-full">
+                <Package className="text-brand-400" size={24} />
+              </div>
+              <h2 className="text-xl font-bold text-white">New Booking</h2>
+            </div>
+
+            <div className="bg-slate-800/40 p-4 rounded-xl mb-6 border border-white/5">
+              <p className="text-xs text-slate-500 uppercase font-bold tracking-widest mb-1">Route</p>
+              <p className="text-sm text-slate-200 leading-relaxed">
+                {newOrder.pickupAddress} <span className="text-brand-500">→</span> {newOrder.dropAddress}
+              </p>
+              <p className="text-[10px] text-slate-600 mt-3 font-mono">ID: #{newOrder.id}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setNewOrder(null)}
+                className="py-2.5 rounded-xl bg-slate-800/50 text-slate-400 font-medium hover:bg-slate-800 hover:text-slate-200 transition-colors"
+              >
+                Ignore
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    await driverService.acceptOrder(newOrder.id);
+                    setNewOrder(null);
+                  } catch (e) {
+                    alert("Order already taken!");
+                    setNewOrder(null);
+                  }
+                }}
+                className="py-2.5 rounded-xl bg-brand-500 text-white font-bold hover:bg-brand-600 shadow-lg shadow-brand-500/20 transition-transform active:scale-95"
+              >
+                Accept
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </DashboardLayout>
   );
 }

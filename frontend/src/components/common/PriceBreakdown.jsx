@@ -1,7 +1,7 @@
 import React from 'react';
-import { Receipt, Info, Loader2 } from 'lucide-react';
+import { Receipt, Info, Loader2, Cloud, AlertTriangle } from 'lucide-react';
 
-export default function PriceBreakdown({ price, distance, isReady, loading, vehicle   }) {
+export default function PriceBreakdown({ price, distance, isReady, loading, weatherInfo, vehicle }) {
 
 
 
@@ -39,6 +39,41 @@ export default function PriceBreakdown({ price, distance, isReady, loading, vehi
         </div>
       )}
 
+      {/* Weather Information */}
+      {weatherInfo && (
+        <div className="mb-3 p-2 bg-slate-100 rounded-lg border border-slate-200">
+          <div className="flex items-center gap-2 mb-2">
+            <Cloud size={16} className="text-slate-600" />
+            <span className="text-sm font-semibold text-slate-700">
+              Weather Conditions
+            </span>
+          </div>
+          <div className="space-y-1 text-xs text-slate-600">
+            <p className="flex items-center gap-2">
+              <span className="font-medium">Condition:</span>
+              <span className="capitalize">{weatherInfo.condition}</span>
+              {weatherInfo.surcharge > 0 && (
+                <span className="ml-2 px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
+                  +₹{weatherInfo.surcharge.toFixed(2)}
+                </span>
+              )}
+            </p>
+            <p>
+              <span className="font-medium">Description:</span>
+              {weatherInfo.description}
+            </p>
+            {weatherInfo.surcharge > 0 && (
+              <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded">
+                <p className="flex items-center gap-2 text-orange-700 text-xs font-medium">
+                  <AlertTriangle size={12} />
+                  Weather surcharge applied due to current conditions
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <span className="text-sm text-slate-400">Total</span>
         <span className="text-xl font-bold text-brand-300">
@@ -53,7 +88,7 @@ export default function PriceBreakdown({ price, distance, isReady, loading, vehi
       )}
 
       <p className="text-[10px] text-slate-600 mt-3">
-        Includes distance, weight, and GST.
+        Includes distance, weight, GST{weatherInfo?.surcharge > 0 ? ', and weather adjustments' : ''}.
       </p>
     </div>
   );

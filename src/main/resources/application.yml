@@ -35,5 +35,6 @@ direction:
   api:
     key: ${DIRECTION_API_KEY}
 
-
-
+weather:
+  api:
+    key: ${WEATHER_API_KEY}

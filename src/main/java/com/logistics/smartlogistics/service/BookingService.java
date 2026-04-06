@@ -6,13 +6,16 @@ import com.logistics.smartlogistics.entity.DeliveryOrder;
 import com.logistics.smartlogistics.enums.DeliveryStatus;
 import com.logistics.smartlogistics.enums.DeliveryType;
 import com.logistics.smartlogistics.enums.VehicleType;
+
 import com.logistics.smartlogistics.repository.AppUserRepository;
 import com.logistics.smartlogistics.repository.DeliveryOrderRepository;
+//import com.logistics.smartlogistics.utils.VehicleUtil;
+
 import com.logistics.smartlogistics.repository.WarehouseRepository;
-import com.logistics.smartlogistics.utils.VehicleUtil;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class BookingService {
@@ -119,7 +122,7 @@ public class BookingService {
         order.setDropLatitude(dropPoint.latitude());
         order.setDropLongitude(dropPoint.longitude());
 
-        // 💰 NEW PRICING (DISTANCE BASED)
+        // 💰 NEW PRICING (DISTANCE BASED WITH WEATHER)
         order.setEstimatedPrice(
                 pricingEngineService.estimatePrice(
                         request.deliveryType(),
@@ -128,7 +131,10 @@ public class BookingService {
                         request.breadthCm(),
                         request.heightCm(),
                         distanceKm,
-                        vehicle
+                        vehicle,
+                        distanceKm,
+                        pickupPoint.latitude(),
+                        pickupPoint.longitude()
                 )
         );
 

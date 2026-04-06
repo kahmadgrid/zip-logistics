@@ -16,6 +16,12 @@ import java.util.Map;
 @Service
 public class PricingEngineService {
 
+    private final WeatherService weatherService;
+
+    public PricingEngineService(WeatherService weatherService) {
+        this.weatherService = weatherService;
+    }
+
     // Base prices
     private static final double BASE_STANDARD = 49.0;
     private static final double BASE_EXPRESS  = 99.0;
@@ -33,6 +39,9 @@ public class PricingEngineService {
 
     /**
      * ✅ MAIN METHOD (vehicle-aware pricing)
+=======
+     * MAIN METHOD - WITH WEATHER INTEGRATION
+>>>>>>> 395ca50 (weather condition integrated for price consideration)
      */
     public BigDecimal estimatePrice(
             DeliveryType deliveryType,
@@ -41,7 +50,9 @@ public class PricingEngineService {
             double breadthCm,
             double heightCm,
             double distanceKm,
-            VehicleType vehicleType
+            VehicleType vehicleType,
+            double pickupLatitude,
+            double pickupLongitude
     ) {
 
         // 📦 1. Volumetric weight
@@ -62,10 +73,21 @@ public class PricingEngineService {
 
         double distanceCharge = distanceKm * (perKmRate + extraPerKm);
 
-        // 🧾 4. Total
-        double subtotal = base + weightCharge + distanceCharge;
+        // 🌤️ 4. Weather surcharge
+        WeatherService.WeatherInfo weather = weatherService.getWeather(pickupLatitude, pickupLongitude);
+        BigDecimal weatherSurcharge = weatherService.calculateWeatherSurcharge(weather);
+        
+        System.out.println("Weather conditions: " + weather.toString());
+        System.out.println("Weather surcharge applied: ₹" + weatherSurcharge);
+
+        // 🧾 5. Total
+        double subtotal = base + weightCharge + distanceCharge + weatherSurcharge.doubleValue();
         double gst      = subtotal * GST_RATE;
         double total    = subtotal + gst;
+
+        System.out.println("Final pricing breakdown - Base: " + base + ", Weight: " + weightCharge + 
+                          ", Distance: " + distanceCharge + ", Weather: " + weatherSurcharge + 
+                          ", GST: " + gst + ", Total: " + total);
 
         return BigDecimal.valueOf(total)
                 .setScale(2, RoundingMode.HALF_UP);
@@ -127,9 +149,11 @@ public class PricingEngineService {
         return estimatePrice(
                 deliveryType,
                 weightKg,
-                10, 10, 10,
+                10.0, 10.0, 10.0,
                 distanceKm,
-                vehicle
+                vehicle,
+                12.9716,
+                77.5946
         );
     }
 
@@ -143,5 +167,7 @@ public class PricingEngineService {
             case MINI_TRUCK -> 20;
             case TRUCK -> 50;
         };
+        // Use default coordinates (Bangalore) for weather fallback
+        return estimatePrice(deliveryType, weightKg, 0.0, 0.0, 0.0, distanceKm, 12.9716, 77.5946);
     }
 }

@@ -30,6 +30,7 @@ export default function CreateBookingPage() {
   const [distance, setDistance]         = useState(null);
   const [price, setPrice]               = useState(null);
   const [priceLoading, setPriceLoading] = useState(false);
+  const [weatherInfo, setWeatherInfo]     = useState(null);
   const [detectedPickupZone, setDetectedPickupZone] = useState('');
   const [detectedDropZone, setDetectedDropZone] = useState('');
   const [zoneLoading, setZoneLoading] = useState(false);
@@ -186,6 +187,14 @@ export default function CreateBookingPage() {
         setPrice(data.price);
         setDistance(data.distanceKm);
         setVehicle(data.vehicle);
+        // Store weather information for display
+        if (data.weatherCondition) {
+          setWeatherInfo({
+            condition: data.weatherCondition,
+            description: data.weatherDescription,
+            surcharge: data.weatherSurcharge
+          });
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -197,7 +206,15 @@ export default function CreateBookingPage() {
     form.deliveryType, form.weightKg, form.lengthCm, form.breadthCm,
     form.heightCm, form.pickupAddress, form.dropAddress,
     form.pickupLatitude, form.pickupLongitude,
+    form.dropLatitude, form.dropLongitude,
   ]);
+
+  // Update favicon based on weather conditions
+  useEffect(() => {
+    if (weatherInfo?.condition) {
+      updateFavicon(weatherInfo.condition);
+    }
+  }, [weatherInfo]);
 
   // ── Submit ────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
@@ -409,6 +426,7 @@ export default function CreateBookingPage() {
             vehicle={vehicle}
             isReady={priceReady}
             loading={priceLoading}
+            weatherInfo={weatherInfo}
           />
 
           <div className="card text-xs text-stone-500 space-y-1.5">

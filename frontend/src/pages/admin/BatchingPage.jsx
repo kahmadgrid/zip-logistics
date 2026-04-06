@@ -1,17 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Zap, Loader2, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { SelectField } from '../../components/forms/FormFields';
 import { adminService } from '../../services/adminService';
-import { ZONES, getErrMsg } from '../../utils/constants';
+import { zoneService } from '../../services/zoneService';
+import { getErrMsg } from '../../utils/constants';
 
 export default function BatchingPage() {
   const [form,    setForm]    = useState({ originZone: '', destinationZone: '' });
+  const [zones,   setZones]   = useState([]);
   const [loading, setLoading] = useState(false);
   const [result,  setResult]  = useState(null);
 
   const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  useEffect(() => {
+    zoneService.getAllZones()
+      .then((data) => setZones(data))
+      .catch(() => toast.error('Failed to fetch zones'));
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -48,9 +56,9 @@ export default function BatchingPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <SelectField label="Origin Zone" name="originZone" value={form.originZone}
-              onChange={onChange} options={ZONES} required />
+              onChange={onChange} options={zones} required />
             <SelectField label="Destination Zone" name="destinationZone" value={form.destinationZone}
-              onChange={onChange} options={ZONES} required />
+              onChange={onChange} options={zones} required />
 
             <button type="submit" disabled={loading} className="btn-primary">
               {loading ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}

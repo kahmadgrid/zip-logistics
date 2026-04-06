@@ -1,21 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Loader2, CheckCircle } from 'lucide-react';
+import { Package, Loader2, CheckCircle, MapPin, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { SelectField, NumberField } from '../../components/forms/FormFields';
 import PriceBreakdown from '../../components/common/PriceBreakdown';
 import { bookingService } from '../../services/bookingService';
-import { ZONES, DELIVERY_TYPES, getErrMsg } from '../../utils/constants';
+import { DELIVERY_TYPES, getErrMsg } from '../../utils/constants';
 import { usePickupLocation } from './usePickupLocation';
 import DropAddressInput from './DropAddressInput';
 import PickupAddressInput from './PickupAddressInput';
+import { zoneService } from '../../services/zoneService';
 
 const INIT = {
   deliveryType:    'STANDARD',
   pickupAddress:   '', dropAddress:    '',
   pickupZone:      '', dropZone:       '',
   pickupLatitude:  '', pickupLongitude: '',
+  dropLatitude:    '', dropLongitude:   '',
   receiverName:    '', receiverMobile: '',
   weightKg:        '', lengthCm:       '',
   breadthCm:       '', heightCm:       '',
@@ -28,6 +30,10 @@ export default function CreateBookingPage() {
   const [distance, setDistance]         = useState(null);
   const [price, setPrice]               = useState(null);
   const [priceLoading, setPriceLoading] = useState(false);
+  const [weatherInfo, setWeatherInfo]     = useState(null);
+  const [detectedPickupZone, setDetectedPickupZone] = useState('');
+  const [detectedDropZone, setDetectedDropZone] = useState('');
+  const [zoneLoading, setZoneLoading] = useState(false);
   const [vehicle, setVehicle] = useState(null);
 
   // ── Pickup live location ──────────────────────────────────────
@@ -65,10 +71,94 @@ export default function CreateBookingPage() {
     setForm(next);
   };
 
+  // ── Drop address change ──
+  const onDropChange = (e) => {
+    const next = { ...form, dropAddress: e.target.value };
+    if (e.location) {
+      next.dropLatitude  = e.location.latitude;
+      next.dropLongitude = e.location.longitude;
+      // Auto-detect zone from coordinates when address is selected
+
+    } else {
+      // User typed manually — clear stale coordinates
+      next.dropLatitude  = '';
+      next.dropLongitude = '';
+      // No automatic zone detection on typing - user must click detection button
+    }
+    setForm(next);
+  };
+
+  // ── Manual zone detection functions ───────────────────────────
+  const handlePickupZoneDetection = async () => {
+    if (!form.pickupAddress) {
+      toast.error('Please enter pickup address first');
+      return;
+    }
+    await detectPickupZone(form.pickupAddress, form.pickupLatitude, form.pickupLongitude);
+  };
+
+  const handleDropZoneDetection = async () => {
+    if (!form.dropAddress) {
+      toast.error('Please enter drop address first');
+      return;
+    }
+    await detectDropZone(form.dropAddress, form.dropLatitude, form.dropLongitude);
+  };
+
+  // ── Zone detection functions ──
+  const detectPickupZone = async (address, latitude, longitude) => {
+    if (!address && (latitude == null || longitude == null)) return;
+
+    setZoneLoading(true);
+    try {
+      const zone = await zoneService.detectZone(address, latitude, longitude);
+      setDetectedPickupZone(zone);
+      setForm(f => ({ ...f, pickupZone: zone }));
+
+      // Show error if not serviceable
+      if (zone === 'NOT_SERVICEABLE') {
+        toast.error('Pickup location is not serviceable. Please check if the address falls within our service areas.');
+      }
+    } catch (err) {
+      console.error('Pickup zone detection failed:', err);
+      setDetectedPickupZone('NOT_SERVICEABLE');
+      setForm(f => ({ ...f, pickupZone: 'NOT_SERVICEABLE' }));
+      toast.error('Pickup location is not serviceable. Please check if the address falls within our service areas.');
+    } finally {
+      setZoneLoading(false);
+    }
+  };
+
+  const detectDropZone = async (address, latitude, longitude) => {
+    if (!address && (latitude == null || longitude == null)) return;
+
+    setZoneLoading(true);
+    try {
+      const zone = await zoneService.detectZone(address, latitude, longitude);
+      setDetectedDropZone(zone);
+      setForm(f => ({ ...f, dropZone: zone }));
+
+      // Show error if not serviceable
+      if (zone === 'NOT_SERVICEABLE') {
+        toast.error('Drop location is not serviceable. Please check if the address falls within our service areas.');
+      }
+    } catch (err) {
+      console.error('Drop zone detection failed:', err);
+      setDetectedDropZone('NOT_SERVICEABLE');
+      setForm(f => ({ ...f, dropZone: 'NOT_SERVICEABLE' }));
+      toast.error('Drop location is not serviceable. Please check if the address falls within our service areas.');
+    } finally {
+      setZoneLoading(false);
+    }
+  };
+
   // ── Price estimation ──────────────────────────────────────────
   const priceReady = !!(
     form.weightKg && form.lengthCm && form.breadthCm &&
-    form.heightCm && form.pickupAddress && form.dropAddress
+    form.heightCm && form.pickupAddress && form.dropAddress &&
+    detectedPickupZone && detectedDropZone &&
+    detectedPickupZone !== 'NOT_SERVICEABLE' &&
+    detectedDropZone !== 'NOT_SERVICEABLE'
   );
 
   useEffect(() => {
@@ -84,13 +174,27 @@ export default function CreateBookingPage() {
           heightCm:        parseFloat(form.heightCm),
           pickupAddress:   form.pickupAddress,
           dropAddress:     form.dropAddress,
+          pickupZone:      form.pickupZone,
+          dropZone:        form.dropZone,
+          receiverName:    form.receiverName,
+          receiverMobile:   form.receiverMobile,
           pickupLatitude:  form.pickupLatitude  ? parseFloat(form.pickupLatitude)  : undefined,
           pickupLongitude: form.pickupLongitude ? parseFloat(form.pickupLongitude) : undefined,
+          dropLatitude:    form.dropLatitude    ? parseFloat(form.dropLatitude)    : undefined,
+          dropLongitude:   form.dropLongitude   ? parseFloat(form.dropLongitude)   : undefined,
         };
         const { data } = await bookingService.estimatePrice(payload);
         setPrice(data.price);
         setDistance(data.distanceKm);
         setVehicle(data.vehicle);
+        // Store weather information for display
+        if (data.weatherCondition) {
+          setWeatherInfo({
+            condition: data.weatherCondition,
+            description: data.weatherDescription,
+            surcharge: data.weatherSurcharge
+          });
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -102,11 +206,21 @@ export default function CreateBookingPage() {
     form.deliveryType, form.weightKg, form.lengthCm, form.breadthCm,
     form.heightCm, form.pickupAddress, form.dropAddress,
     form.pickupLatitude, form.pickupLongitude,
+    form.dropLatitude, form.dropLongitude,
   ]);
+
+
 
   // ── Submit ────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Check if zones are serviceable before submission
+    if (detectedPickupZone === 'NOT_SERVICEABLE' || detectedDropZone === 'NOT_SERVICEABLE') {
+      toast.error('Please enter serviceable pickup and drop locations.');
+      return;
+    }
+
     setLoading(true);
     try {
       const payload = {
@@ -117,6 +231,8 @@ export default function CreateBookingPage() {
         heightCm:        parseFloat(form.heightCm),
         pickupLatitude:  form.pickupLatitude  ? parseFloat(form.pickupLatitude)  : undefined,
         pickupLongitude: form.pickupLongitude ? parseFloat(form.pickupLongitude) : undefined,
+        dropLatitude:    form.dropLatitude    ? parseFloat(form.dropLatitude)    : undefined,
+        dropLongitude:   form.dropLongitude   ? parseFloat(form.dropLongitude)   : undefined,
       };
       await bookingService.create(payload);
       toast.success('Booking created successfully!');
@@ -185,16 +301,68 @@ export default function CreateBookingPage() {
                 {/* Drop address — uses DropAddressInput component */}
                 <DropAddressInput
                   value={form.dropAddress}
-                  onChange={onChange}
+                  onChange={onDropChange}
                 />
 
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <SelectField label="Pickup Zone" name="pickupZone" value={form.pickupZone}
-                  onChange={onChange} options={ZONES} required />
-                <SelectField label="Drop Zone" name="dropZone" value={form.dropZone}
-                  onChange={onChange} options={ZONES} required />
+                <div>
+                  <label className="label">Pickup Zone </label>
+                  <div className="flex gap-2">
+                    <div className={`flex-1 input flex items-center gap-2 ${
+                      detectedPickupZone === 'NOT_SERVICEABLE'
+                        ? 'bg-red-500/20 text-red-300'
+                        : 'bg-surface-border/20 text-green-300'
+                    }`}>
+                      {zoneLoading ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <MapPin size={14} />
+                      )}
+                      {detectedPickupZone === 'NOT_SERVICEABLE'
+                        ? 'Not Serviceable'
+                        : (detectedPickupZone || 'Enter pickup address...')
+                      }
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handlePickupZoneDetection}
+                      className="px-3 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 rounded-lg border border-blue-500/30 transition-colors flex items-center gap-1"
+                      title="Detect Zone"
+                    >
+                      <Search size={14} />
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="label">Drop Zone </label>
+                  <div className="flex gap-2">
+                    <div className={`flex-1 input flex items-center gap-2 ${
+                      detectedDropZone === 'NOT_SERVICEABLE'
+                        ? 'bg-red-500/20 text-red-300'
+                        : 'bg-surface-border/20 text-green-300'
+                    }`}>
+                      {zoneLoading ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <MapPin size={14} />
+                      )}
+                      {detectedDropZone === 'NOT_SERVICEABLE'
+                        ? 'Not Serviceable'
+                        : (detectedDropZone || 'Enter drop address...')
+                      }
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleDropZoneDetection}
+                      className="px-3 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 rounded-lg border border-blue-500/30 transition-colors flex items-center gap-1"
+                      title="Detect Zone"
+                    >
+                      <Search size={14} />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -253,6 +421,7 @@ export default function CreateBookingPage() {
             vehicle={vehicle}
             isReady={priceReady}
             loading={priceLoading}
+            weatherInfo={weatherInfo}
           />
 
           <div className="card text-xs text-stone-500 space-y-1.5">

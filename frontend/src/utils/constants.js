@@ -29,8 +29,6 @@ export const AVAILABILITY_COLORS = {
   OFFLINE: 'text-slate-400 bg-slate-400/10 border-slate-400/30',
 };
 
-export const ZONES = ['BANGALORE_ZONE', 'CHENNAI_ZONE', 'MUMBAI_ZONE', 'DELHI_ZONE', 'KOLKATA_ZONE'];
-
 export const ROLES = ['ROLE_USER', 'ROLE_DRIVER', 'ROLE_ADMIN'];
 
 export const DELIVERY_TYPES = ['STANDARD', 'EXPRESS'];

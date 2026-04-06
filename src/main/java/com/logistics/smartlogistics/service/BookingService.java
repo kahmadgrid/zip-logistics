@@ -12,6 +12,7 @@ import com.logistics.smartlogistics.repository.DeliveryOrderRepository;
 //import com.logistics.smartlogistics.utils.VehicleUtil;
 
 import com.logistics.smartlogistics.repository.WarehouseRepository;
+import com.logistics.smartlogistics.utils.VehicleUtil;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -132,7 +133,6 @@ public class BookingService {
                         request.heightCm(),
                         distanceKm,
                         vehicle,
-                        distanceKm,
                         pickupPoint.latitude(),
                         pickupPoint.longitude()
                 )

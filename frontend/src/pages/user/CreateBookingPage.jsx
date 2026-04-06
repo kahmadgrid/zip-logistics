@@ -209,12 +209,7 @@ export default function CreateBookingPage() {
     form.dropLatitude, form.dropLongitude,
   ]);
 
-  // Update favicon based on weather conditions
-  useEffect(() => {
-    if (weatherInfo?.condition) {
-      updateFavicon(weatherInfo.condition);
-    }
-  }, [weatherInfo]);
+
 
   // ── Submit ────────────────────────────────────────────────────
   const handleSubmit = async (e) => {

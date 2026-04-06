@@ -53,7 +53,7 @@ public class PricingEngineService {
             VehicleType vehicleType,
             double pickupLatitude,
             double pickupLongitude
-    ) {
+            ) {
 
         // 📦 1. Volumetric weight
         double volumetricKg = (lengthCm * breadthCm * heightCm) / 5000.0;
@@ -154,7 +154,7 @@ public class PricingEngineService {
                 vehicle,
                 12.9716,
                 77.5946
-        );
+              );
     }
 
     /**
@@ -168,6 +168,6 @@ public class PricingEngineService {
             case TRUCK -> 50;
         };
         // Use default coordinates (Bangalore) for weather fallback
-        return estimatePrice(deliveryType, weightKg, 0.0, 0.0, 0.0, distanceKm, 12.9716, 77.5946);
+//        return estimatePrice(deliveryType, weightKg, 0.0, 0.0, 0.0, distanceKm, 12.9716, 77.5946);
     }
 }

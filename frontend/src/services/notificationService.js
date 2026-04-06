@@ -28,7 +28,7 @@ export const requestNotificationPermission = async () => {
       return null;
     }
 
-    const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+    const vapidKey = process.env.REACT_APP_FIREBASE_VAPID_KEY;
     if (!isPlausibleVapidKey(vapidKey)) {
       console.warn(
         "VITE_FIREBASE_VAPID_KEY is missing or not a valid Web Push key — skipping FCM (get the full key from Firebase Console → Cloud Messaging)."

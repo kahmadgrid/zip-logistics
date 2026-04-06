@@ -1,17 +1,20 @@
 // src/firebase.js — Firebase app + messaging singleton.
-// FCM Web Push requires a valid Web Push certificate (VAPID) public key from Firebase Console.
-// Set VITE_FIREBASE_VAPID_KEY in frontend/.env (full key from Project settings → Cloud Messaging).
+// CRA replaces direct process.env.REACT_APP_* at build time.
 
 import { initializeApp } from "firebase/app";
 import { getMessaging, getToken, onMessage, isSupported } from "firebase/messaging";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA4PcfwGGs0AolRiGCwYXMOuawrlmmpG6o",
-  authDomain: "logistics-app-60b52.firebaseapp.com",
-  projectId: "logistics-app-60b52",
-  messagingSenderId: "542773205151",
-  appId: "1:542773205151:web:f52d8aed407fe9ff4ceaaa"
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || "",
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "logistics-app-60b52.firebaseapp.com",
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || "logistics-app-60b52",
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || "542773205151",
+  appId: process.env.REACT_APP_FIREBASE_APP_ID || "1:542773205151:web:f52d8aed407fe9ff4ceaaa"
 };
+
+if (!firebaseConfig.apiKey) {
+  console.error("Missing REACT_APP_FIREBASE_API_KEY in frontend/.env");
+}
 
 const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
@@ -38,10 +41,10 @@ export const requestForToken = async () => {
       console.warn("Notification permission denied");
       return null;
     }
-    const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+    const vapidKey = process.env.REACT_APP_FIREBASE_VAPID_KEY;
     if (!isPlausibleVapidKey(vapidKey)) {
       console.warn(
-        "VITE_FIREBASE_VAPID_KEY is missing or invalid. Add the full Web Push key from Firebase Console (Cloud Messaging)."
+        "REACT_APP_FIREBASE_VAPID_KEY is missing or invalid. Add full Web Push key from Firebase Console (Cloud Messaging)."
       );
       return null;
     }

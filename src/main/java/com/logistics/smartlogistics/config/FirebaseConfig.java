@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -16,16 +15,17 @@ public class FirebaseConfig {
 
     @Bean
     public FirebaseApp firebaseApp() throws IOException {
+        // Prevent duplicate initialization during dev restarts/context refreshes.
+        if (!FirebaseApp.getApps().isEmpty()) {
+            return FirebaseApp.getInstance();
+        }
 
-
-
-        InputStream serviceAccount =
-                new ClassPathResource("firebase-service-account.json").getInputStream();
-
-        FirebaseOptions options = FirebaseOptions.builder()
-                .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                .build();
-
-        return FirebaseApp.initializeApp(options);
+        try (InputStream serviceAccount =
+                     new ClassPathResource("firebase-service-account.json").getInputStream()) {
+            FirebaseOptions options = FirebaseOptions.builder()
+                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                    .build();
+            return FirebaseApp.initializeApp(options);
+        }
     }
 }

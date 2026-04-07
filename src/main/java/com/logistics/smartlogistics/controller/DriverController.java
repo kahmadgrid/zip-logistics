@@ -196,8 +196,6 @@ public class DriverController {
             case DRIVER_ASSIGNED -> String.format("🚚 [Parcel #%d] Driver assigned to your order", parcelId);
             case PICKED_UP -> String.format("📦 [Parcel #%d] Parcel picked up", parcelId);
             case IN_TRANSIT -> String.format("🚛 [Parcel #%d] Parcel is in transit", parcelId);
-            case AT_ORIGIN_WAREHOUSE -> String.format("🏭 [Parcel #%d] Reached origin warehouse", parcelId);
-            case AT_DESTINATION_WAREHOUSE -> String.format("📍 [Parcel #%d] Reached destination warehouse", parcelId);
             case OUT_FOR_DELIVERY -> String.format("🚚 [Parcel #%d] Out for delivery", parcelId);
             case DELIVERED -> String.format("✅ [Parcel #%d] Parcel delivered successfully", parcelId);
             default -> null;

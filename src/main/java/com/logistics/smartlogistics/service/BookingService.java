@@ -40,7 +40,7 @@ public class BookingService {
                           PricingEngineService pricingEngineService,
                           MatchingEngineService matchingEngineService,
 
-                          NotificationService notificationService) {
+                          NotificationService notificationService,
                           GeocodingService geocodingService,
                           ZoneDetectionService zoneDetectionService) {
         this.deliveryOrderRepository = deliveryOrderRepository;

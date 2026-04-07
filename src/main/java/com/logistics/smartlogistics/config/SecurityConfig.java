@@ -34,22 +34,31 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // ✅ NEW WAY: enable cors using config source
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 .authorizeHttpRequests(auth -> auth
-                        // ✅ VERY IMPORTANT: allow preflight
+                        // Preflight
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+                        // Public endpoints
                         .requestMatchers("/api/auth/**", "/ws/**", "/actuator/health").permitAll()
+                        .requestMatchers("/api/pricing/estimate").permitAll()
+
+                        // Role-restricted
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/driver/**").hasRole("DRIVER")
-                        .requestMatchers("/api/pricing/estimate").permitAll()
+
+                        // ✅ Bookings & tracking — was missing .authenticated() / role check at the end
                         .requestMatchers("/api/bookings/**", "/api/tracking/**")
                         .hasAnyRole("USER", "DRIVER", "ADMIN")
+
+                        // Notifications
+                        .requestMatchers(HttpMethod.GET,    "/api/notifications/**").authenticated()
+                        .requestMatchers(HttpMethod.PATCH,  "/api/notifications/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/notifications/**").authenticated()
+                        .requestMatchers(HttpMethod.POST,   "/api/notifications/**").authenticated()
 
                         .anyRequest().authenticated()
                 )
@@ -60,19 +69,16 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // ✅ CORS CONFIG (MAIN FIX)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-
-        config.setAllowedOriginPatterns(List.of("*")); // allow all frontend
+        config.setAllowedOriginPatterns(List.of("*"));
         config.setAllowedMethods(List.of("*"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
-
         return source;
     }
 

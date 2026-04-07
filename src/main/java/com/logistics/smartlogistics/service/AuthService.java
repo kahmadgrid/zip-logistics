@@ -80,7 +80,6 @@ public class AuthService {
 
         // 🔐 Set new password (encoded)
         user.setPassword(passwordEncoder.encode(request.newPassword()));
-
         appUserRepository.save(user);
     }
 }

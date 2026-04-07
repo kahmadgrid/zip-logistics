@@ -31,7 +31,7 @@ public class MatchingEngineService {
 
         if (candidates.isEmpty()) return List.of();
 
-        // ✅ Step 1: Exact vehicle match (BEST CASE)
+        //  Step 1: Exact vehicle match (BEST CASE)
         List<DriverProfile> exactMatch = candidates.stream()
                 .filter(driver ->
                         driver.getVehicleType() == order.getSuggestedVehicle()
@@ -59,7 +59,8 @@ public class MatchingEngineService {
     }
 
     private double score(DeliveryOrder order, DriverProfile driver) {
-
+        //distance between driver and pickup location
+        //Smaller distance → better (lower score)
         double distanceKm = DistanceUtils.distanceKm(
                 order.getPickupLatitude(), order.getPickupLongitude(),
                 driver.getCurrentLatitude(), driver.getCurrentLongitude()

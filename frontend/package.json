@@ -5,7 +5,8 @@
   "dependencies": {
     "@stomp/stompjs": "^7.3.0",
     "axios": "^1.6.7",
-    "dotenv": "^17.4.0",
+    "dotenv": "^17.4.1",
+    "firebase": "^12.11.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",

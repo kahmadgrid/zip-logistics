@@ -22,7 +22,7 @@ public class GeocodingService {
                 + "&key=" + apiKey;
 
         Map response = restTemplate.getForObject(url, Map.class);
-
+        System.out.println(response);
         if (response == null) {
             throw new RuntimeException("No response from geocoding API");
         }

@@ -7,6 +7,7 @@ import StatusBadge from '../../components/common/StatusBadge';
 import { driverService } from '../../services/driverService';
 import { ACTIVE_STATUSES, COMPLETE_STATUSES } from '../../utils/constants';
 import { useAuth } from '../../context/AuthContext';
+import NotificationBell from '../../components/NotificationBell'; // ✅ added
 
 export default function DriverDashboard() {
   const { user }                  = useAuth();
@@ -22,7 +23,7 @@ export default function DriverDashboard() {
 
     Promise.allSettled([
       isOnline ? driverService.getAvailableTasks() : isOnline ? driverService.getAvailableTasks() : { status: 'fulfilled', value: [] },
-      driverService.getAssignedTasks(), // ✅ ALWAYS call
+      driverService.getAssignedTasks(),
     ])
       .then(([avail, assign]) => {
         setAvailable(
@@ -30,7 +31,6 @@ export default function DriverDashboard() {
             ? avail.value
             : []
         );
-
         setAssigned(
           assign.status === 'fulfilled' && Array.isArray(assign.value)
             ? assign.value
@@ -38,15 +38,13 @@ export default function DriverDashboard() {
         );
       })
       .finally(() => setLoading(false));
-
   }, [isOnline]);
 
-    useEffect(() => {
-      fetchProfile();
-      const interval = setInterval(fetchProfile, 10000); // every 10 sec
-
-      return () => clearInterval(interval);
-    }, []);
+  useEffect(() => {
+    fetchProfile();
+    const interval = setInterval(fetchProfile, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   const active    = assigned.filter(t => ACTIVE_STATUSES.includes(t.status));
   const completed = assigned.filter(t => COMPLETE_STATUSES.includes(t.status));
@@ -55,7 +53,6 @@ export default function DriverDashboard() {
     try {
       if (isOnline) {
         await driverService.goOffline();
-
         setIsOnline(false);
       } else {
         await driverService.goOnline();
@@ -66,57 +63,56 @@ export default function DriverDashboard() {
     }
   };
 
-    const fetchProfile = async () => {
-      try {
-        const data = await driverService.getMyProfile();
-        console.log("Profile API:", data);
-
-        if (!data) {
-          // No profile yet → treat as OFFLINE
-          setIsOnline(false);
-          return;
-        }
-
-        setIsOnline(data.availability === 'ONLINE');
-      } catch (err) {
-        console.error(err);
+  const fetchProfile = async () => {
+    try {
+      const data = await driverService.getMyProfile();
+      if (!data) {
+        setIsOnline(false);
+        return;
       }
-    };
+      setIsOnline(data.availability === 'ONLINE');
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <DashboardLayout>
-        {isOnline == false && (
-          <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm text-center">
-            You are offline. You can still use the app, but you won’t receive new orders.
-          </div>
-        )}
+      {isOnline == false && (
+        <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm text-center">
+          You are offline. You can still use the app, but you won't receive new orders.
+        </div>
+      )}
       <div className="page-header flex items-center justify-between">
         <div>
           <h1>Driver Dashboard</h1>
           <p>{user?.email}</p>
         </div>
         <div className="flex items-center gap-3">
-            <button
-              onClick={handleToggleAvailability}
-              disabled={isOnline === null}
-              className={`btn-secondary ${
-                isOnline
-                  ? 'bg-red-500/20 text-red-400'
-                  : 'bg-green-500/20 text-green-400'
-              }`}
-            >
-              {isOnline === null
-                ? 'Loading...'
-                : isOnline
-                  ? 'Go Offline'
-                  : 'Go Online'}
-            </button>
+          <NotificationBell /> {/* ✅ added */}
+          <button
+            onClick={handleToggleAvailability}
+            disabled={isOnline === null}
+            className={`btn-secondary ${
+              isOnline
+                ? 'bg-red-500/20 text-red-400'
+                : 'bg-green-500/20 text-green-400'
+            }`}
+          >
+            {isOnline === null
+              ? 'Loading...'
+              : isOnline
+                ? 'Go Offline'
+                : 'Go Online'}
+          </button>
 
-            <Link to="/driver/profile" className="btn-secondary flex items-center gap-1">
-              <User size={15} /> Update Profile
-            </Link>
-          </div>
+          <Link to="/driver/profile" className="btn-secondary flex items-center gap-1">
+            <User size={15} /> Update Profile
+          </Link>
+        </div>
       </div>
+
+      {/* rest of your JSX unchanged below... */}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <InfoCard label="Available Orders"  value={available.length} icon={Package}   accent="blue"  sub="Open for pickup" />

@@ -29,8 +29,6 @@ export const AVAILABILITY_COLORS = {
   OFFLINE: 'text-slate-400 bg-slate-400/10 border-slate-400/30',
 };
 
-export const ZONES = ['NORTH_ZONE', 'SOUTH_ZONE', 'EAST_ZONE', 'WEST_ZONE', 'CENTRAL_ZONE'];
-
 export const ROLES = ['ROLE_USER', 'ROLE_DRIVER', 'ROLE_ADMIN'];
 
 export const DELIVERY_TYPES = ['STANDARD', 'EXPRESS'];

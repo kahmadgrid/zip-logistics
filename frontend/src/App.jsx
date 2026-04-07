@@ -30,6 +30,7 @@ import DriverTasksPage   from './pages/driver/DriverTasksPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import WarehousePage  from './pages/admin/WarehousePage';
 import UsersPage      from './pages/admin/UsersPage';
+import ZoneManagementPage from './pages/admin/ZoneManagementPage';
 import DriversPage    from './pages/admin/DriversPage';
 import BatchingPage   from './pages/admin/BatchingPage';
 import LogsPage       from './pages/admin/LogsPage';
@@ -138,6 +139,10 @@ export default function App() {
           <Route
             path="/admin/users"
             element={<ProtectedRoute role="ROLE_ADMIN"><UsersPage /></ProtectedRoute>}
+          />
+          <Route
+            path="/admin/zones"
+            element={<ProtectedRoute role="ROLE_ADMIN"><ZoneManagementPage /></ProtectedRoute>}
           />
           <Route
             path="/admin/drivers"

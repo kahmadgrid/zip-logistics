@@ -35,20 +35,6 @@ public class TrackingController {
         return trackingService.logLocation(orderId, request);
     }
 
-//    @GetMapping("/{orderId}")
-//    public List<TrackingLog> timeline(@PathVariable Long orderId) {
-//        return trackingService.getOrderTimeline(orderId);
-//    }
-//
-//    @Autowired
-//    private SimpMessagingTemplate messagingTemplate;
-//
-//    public void sendLocationUpdate(TrackingEvent event) {
-//        messagingTemplate.convertAndSend(
-//                "/topic/tracking/" + event.getOrderId(),
-//                event
-//        );
-//    }
 
     @GetMapping("/{orderId}")
     public Map<String, Object> timeline(@PathVariable Long orderId) {

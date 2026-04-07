@@ -12,5 +12,8 @@ public class PricingResponse {
 
     private double distanceKm;
     private BigDecimal price;
+    private String weatherCondition;
+    private String weatherDescription;
+    private BigDecimal weatherSurcharge;
     private VehicleType vehicle;
 }

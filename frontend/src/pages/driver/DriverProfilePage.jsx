@@ -8,8 +8,9 @@ import DashboardLayout from '../../components/layout/DashboardLayout';
 import { InputField, SelectField, NumberField } from '../../components/forms/FormFields';
 import { driverService } from '../../services/driverService';
 import { getMyProfile } from '../../services/UserService';
+import { zoneService } from '../../services/zoneService';
 import api from '../../services/api';
-import { ZONES, getErrMsg } from '../../utils/constants';
+import { getErrMsg } from '../../utils/constants';
 
 /* ── constants ───────────────────────── */
 const VEHICLE_TYPES = ['BIKE', 'SCOOTER', 'MINI_TRUCK', 'TRUCK'];
@@ -40,6 +41,7 @@ export default function DriverProfilePage() {
 
   const [userProfile, setUserProfile] = useState(null);
   const [form, setForm] = useState(INIT);
+  const [zones, setZones] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -57,6 +59,10 @@ export default function DriverProfilePage() {
     const fetchData = async () => {
       try {
         setFetching(true);
+
+        // 🔥 Fetch zones from database
+        const zonesData = await zoneService.getAllZones();
+        setZones(zonesData);
 
         // 🔥 User profile
         const user = await getMyProfile();
@@ -253,7 +259,7 @@ export default function DriverProfilePage() {
               onChange={onChange} label="Vehicle Number" required />
 
             <SelectField name="currentZone" value={form.currentZone}
-              onChange={onChange} options={ZONES} label="Zone" required />
+              onChange={onChange} options={zones} label="Zone" required />
           </div>
 
           <div className="card">

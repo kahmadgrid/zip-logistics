@@ -1,3 +1,4 @@
+
 package com.logistics.smartlogistics.enums;
 
 public enum VehicleType {

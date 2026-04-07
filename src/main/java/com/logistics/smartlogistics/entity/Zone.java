@@ -10,38 +10,29 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "warehouses")
+@Table(name = "zones")
 @Getter
 @Setter
-public class Warehouse {
+public class Zone {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String code;
+    private String zoneCode;
 
     @Column(nullable = false)
-    private String name;
-
-    @Column
-    private String city;
-
-    @Column(nullable = false, unique = true)
-    private String zone;
+    private String zoneName;
 
     @Column(nullable = false)
-    private Double latitude;
+    private Double centerLatitude;
 
     @Column(nullable = false)
-    private Double longitude;
+    private Double centerLongitude;
 
     @Column(nullable = false)
-    private Integer capacity;
+    private Double radiusKm;
 
     @Column(nullable = false)
-    private Integer currentLoad = 0;
-
-    @Column(nullable = false)
-    private Double radiusKm; // Zone radius in kilometers
+    private Boolean active = true;
 }

@@ -13,7 +13,8 @@ public class WarehouseDtos {
             @NotBlank String zone,
             @NotNull Double latitude,
             @NotNull Double longitude,
-            @NotNull @Min(1) Integer capacity
+            @NotNull @Min(1) Integer capacity,
+            @NotNull Double radiusKm
     ) {
     }
 }

@@ -4,7 +4,8 @@ import toast from 'react-hot-toast';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { InputField, SelectField, NumberField } from '../../components/forms/FormFields';
 import { adminService } from '../../services/adminService';
-import { ZONES, getErrMsg } from '../../utils/constants';
+import { zoneService } from '../../services/zoneService';
+import { getErrMsg } from '../../utils/constants';
 
 const INIT = {
   code: '', name: '', city: '', zone: '',
@@ -13,6 +14,7 @@ const INIT = {
 
 export default function WarehousePage() {
   const [form,       setForm]       = useState(INIT);
+  const [zones,      setZones]      = useState([]);
   const [loading,    setLoading]    = useState(false);
   const [warehouses, setWarehouses] = useState([]);
   const [fetching,   setFetching]   = useState(true);
@@ -25,7 +27,16 @@ export default function WarehousePage() {
       .finally(() => setFetching(false));
   };
 
-  useEffect(() => { fetchWarehouses(); }, []);
+  const fetchZones = () => {
+    zoneService.getAllZones()
+      .then((data) => setZones(data))
+      .catch(() => toast.error('Failed to fetch zones'));
+  };
+
+  useEffect(() => { 
+    fetchWarehouses(); 
+    fetchZones();
+  }, []);
 
   const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -76,7 +87,7 @@ export default function WarehousePage() {
                 <InputField label="City" name="city" value={form.city}
                   onChange={onChange} placeholder="Delhi" required />
                 <SelectField label="Zone" name="zone" value={form.zone}
-                  onChange={onChange} options={ZONES} required />
+                  onChange={onChange} options={zones} required />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <NumberField label="Latitude"  name="latitude"  value={form.latitude}

@@ -14,16 +14,6 @@ export default function UsersPage() {
 
   const fetchUsers = () => {
     setLoading(true);
-    adminService.getUsers()
-      .then(({ data }) => setUsers(data ?? []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => { fetchUsers(); }, []);
-
-  useEffect(() => {
-    setLoading(true);
 
     Promise.all([
       adminService.getUsers(),
@@ -31,10 +21,13 @@ export default function UsersPage() {
     ])
       .then(([uRes, dRes]) => {
         setUsers(uRes.data ?? []);
-        setDrivers(dRes.data ?? []); // 👈 NEW
+        setDrivers(dRes.data ?? []);
       })
+      .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(() => { fetchUsers(); }, []);
 
   const columns = [
     { key: 'id',       label: 'ID',

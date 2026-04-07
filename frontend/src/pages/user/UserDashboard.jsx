@@ -64,7 +64,7 @@ export default function UserDashboard() {
             <Package size={32} className="text-slate-600 mx-auto mb-3" />
             <p className="text-slate-500 text-sm">No bookings yet.</p>
             <Link to="/user/create-booking" className="btn-primary mt-4 inline-flex">
-              <Plus size={14} /> Create your first booking
+              <Plus size={14} /> Create New Booking
             </Link>
           </div>
         ) : (

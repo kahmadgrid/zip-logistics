@@ -23,6 +23,7 @@ export default function DriverTasksPage() {
   const [loadingAssign, setLoadingB]  = useState(true);
   const [expanded,      setExpanded]  = useState(null);
   const [acting,        setActing]    = useState({});
+  const [isOnline,       setIsOnline] = useState(null);
 
   const fetchAvailable = useCallback(() => {
     setLoadingA(true);
@@ -40,9 +41,44 @@ export default function DriverTasksPage() {
       .finally(() => setLoadingB(false));
   }, []);
 
-  const refreshAll = () => { fetchAvailable(); fetchAssigned(); };
+    const fetchProfile = useCallback(() => {
+      driverService.getMyProfile()
+        .then((data) => {
+          if (!data) {
+            setIsOnline(false);
+            return;
+          }
+          setIsOnline(data.availability === 'ONLINE');
+        })
+        .catch(() => setIsOnline(false));
+    }, []);
 
-  useEffect(() => { refreshAll(); }, []);
+  const refreshAll = () => {
+    fetchProfile();
+    fetchAssigned();
+
+    if (isOnline) {
+      fetchAvailable();
+    } else {
+      setAvailable([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  useEffect(() => {
+    if (isOnline === null) return;
+
+    fetchAssigned();
+
+    if (isOnline) {
+      fetchAvailable();
+    } else {
+      setAvailable([]);
+    }
+  }, [isOnline]);
 
   const activeTasks    = assigned.filter(t => ACTIVE_STATUSES.includes(t.status));
   const completedTasks = assigned.filter(t => COMPLETE_STATUSES.includes(t.status));
@@ -53,7 +89,7 @@ export default function DriverTasksPage() {
     completed: completedTasks.length,
   };
 
-  const currentLoading = tab === 'available' ? loadingAvail : loadingAssign;
+  const currentLoading = tab === 'available' ? (isOnline ? loadingAvail : false) : loadingAssign;
   const currentList    = tab === 'available' ? available
                        : tab === 'active'    ? activeTasks
                        : completedTasks;

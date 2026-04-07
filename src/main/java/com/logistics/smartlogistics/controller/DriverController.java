@@ -189,34 +189,6 @@ public class DriverController {
         DeliveryStatus newStatus = DeliveryStatus.valueOf(payload.get("status"));
         DeliveryStatus oldStatus = order.getStatus();
 
-        // ✅ Warehouse load management
-
-        if (oldStatus == DeliveryStatus.AT_ORIGIN_WAREHOUSE &&
-                newStatus == DeliveryStatus.IN_TRANSIT &&
-                order.getWarehouse() != null) {
-
-            var origin = order.getWarehouse();
-            origin.setCurrentLoad(origin.getCurrentLoad() - 1);
-            warehouseRepository.save(origin);
-        }
-
-        if (newStatus == DeliveryStatus.AT_DESTINATION_WAREHOUSE &&
-                order.getDestinationWarehouse() != null) {
-
-            var dest = order.getDestinationWarehouse();
-            dest.setCurrentLoad(dest.getCurrentLoad() + 1);
-            warehouseRepository.save(dest);
-        }
-
-        if (oldStatus == DeliveryStatus.AT_DESTINATION_WAREHOUSE &&
-                newStatus == DeliveryStatus.OUT_FOR_DELIVERY &&
-                order.getDestinationWarehouse() != null) {
-
-            var dest = order.getDestinationWarehouse();
-            dest.setCurrentLoad(dest.getCurrentLoad() - 1);
-            warehouseRepository.save(dest);
-        }
-
         order.setStatus(newStatus);
 
         long parcelId = order.getId();

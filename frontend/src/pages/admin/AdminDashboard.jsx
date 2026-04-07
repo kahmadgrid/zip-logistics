@@ -56,10 +56,6 @@ export default function AdminDashboard() {
             <div className="space-y-2">
               {users.slice(-6).reverse().map((u) => {
                 const driver = drivers.find(d => d.user?.id === u.id);
-
-                console.log("USER:", u);
-                  console.log("MATCHED DRIVER:", driver);
-
                 return (
                   <div key={u.id} className="flex items-center justify-between py-2 border-b border-surface-border/40 last:border-0">
 

@@ -4,8 +4,13 @@ import com.logistics.smartlogistics.dto.PricingRequest;
 import com.logistics.smartlogistics.dto.PricingResponse;
 import com.logistics.smartlogistics.service.GeocodingService;
 import com.logistics.smartlogistics.service.PricingEngineService;
+import com.logistics.smartlogistics.service.WeatherService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
+import com.logistics.smartlogistics.enums.VehicleType;
+import com.logistics.smartlogistics.utils.VehicleUtil;
+
+import java.math.BigDecimal;
 
 @RestController
 @RequestMapping("/api/pricing")
@@ -14,11 +19,14 @@ public class PricingController {
 
     private final PricingEngineService pricingService;
     private final GeocodingService geocodingService;
+    private final WeatherService weatherService;
 
     public PricingController(PricingEngineService pricingService,
-                             GeocodingService geocodingService) {
+                             GeocodingService geocodingService,
+                             WeatherService weatherService) {
         this.pricingService = pricingService;
         this.geocodingService = geocodingService;
+        this.weatherService = weatherService;
     }
 
     @PostMapping("/estimate")
@@ -28,23 +36,17 @@ public class PricingController {
         double pickupLat;
         double pickupLng;
 
-//        if (req.getPickupLat() != null && req.getPickupLng() != null) {
-//            pickupLat = req.getPickupLat();
-//            pickupLng = req.getPickupLng();
-//        } else {
+//
         var pickup = geocodingService.geocode(req.getPickupAddress());
         pickupLat = pickup.latitude();
         pickupLng = pickup.longitude();
-//        }
+//
 
         // 🔹 2. Resolve drop coordinates
         double dropLat;
         double dropLng;
 
-//        if (req.getDropLat() != null && req.getDropLng() != null) {
-//            dropLat = req.getDropLat();
-//            dropLng = req.getDropLng();
-//        } else {
+
         var drop = geocodingService.geocode(req.getDropAddress());
         dropLat = drop.latitude();
         dropLng = drop.longitude();
@@ -56,20 +58,40 @@ public class PricingController {
                 dropLat, dropLng
         );
 
-        // 🔹 4. Calculate price
+        // 🔹 4. Calculate price with weather
+        // Get weather info for display
+        WeatherService.WeatherInfo weather = weatherService.getWeather(pickupLat, pickupLng);
+        BigDecimal weatherSurcharge = weatherService.calculateWeatherSurcharge(weather);
+
+        // 🔹 4. Determine vehicle (IMPORTANT FIX)
+        VehicleType vehicle = VehicleUtil.suggestVehicle(
+                req.getWeightKg(),
+                req.getLengthCm(),
+                req.getBreadthCm(),
+                req.getHeightCm()
+        );
+
+// 🔹 5. Calculate price
         var price = pricingService.estimatePrice(
                 req.getDeliveryType(),
                 req.getWeightKg(),
                 req.getLengthCm(),
                 req.getBreadthCm(),
                 req.getHeightCm(),
-                distanceKm
+                distanceKm,
+                vehicle,   // ✅ FIXED
+                pickupLat,
+                pickupLng
         );
 
-        // 🔹 5. Return structured response
+        // 🔹 5. Return structured response with weather info
         return PricingResponse.builder()
                 .distanceKm(distanceKm)
                 .price(price)
+                .weatherCondition(weather.getCondition())
+                .weatherDescription(weather.getDescription())
+                .weatherSurcharge(weatherSurcharge)
+                .vehicle(vehicle)
                 .build();
     }
 }

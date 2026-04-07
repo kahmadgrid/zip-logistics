@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { authService } from '../../services/authService';
 import { useAuth } from '../../context/AuthContext';
 import { getErrMsg } from '../../utils/constants';
+import { requestNotificationPermission, listenToNotifications } from '../../services/notificationService';
 
 export default function LoginPage() {
   const { login, user } = useAuth();
@@ -37,6 +38,8 @@ export default function LoginPage() {
       const { data } = await authService.login(form);
 
       login(data.token, { email: form.emailOrMobile, role: data.role, ...data });
+      await requestNotificationPermission();
+      listenToNotifications();
 
       toast.success('Welcome back!');
 

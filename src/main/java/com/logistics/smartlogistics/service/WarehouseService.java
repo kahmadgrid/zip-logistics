@@ -6,7 +6,6 @@ import com.logistics.smartlogistics.entity.Warehouse;
 import com.logistics.smartlogistics.repository.WarehouseRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,7 +41,7 @@ public class WarehouseService {
         warehouse.setZone(request.zone().trim());
         warehouse.setLatitude(request.latitude());
         warehouse.setLongitude(request.longitude());
-        warehouse.setCapacity(request.capacity());
+        warehouse.setRadiusKm(request.radiusKm());
         warehouse.setCurrentLoad(0);
         return warehouseRepository.save(warehouse);
     }

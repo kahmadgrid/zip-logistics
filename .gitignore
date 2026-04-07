@@ -98,6 +98,7 @@ logs/
 
 .env
 package-lock.json
+firebase-service-account.json
 # ===============================
 
 # Test Output

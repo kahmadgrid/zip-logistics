@@ -41,4 +41,7 @@ public class Warehouse {
 
     @Column(nullable = false)
     private Integer currentLoad = 0;
+
+    @Column(nullable = false)
+    private Double radiusKm; // Zone radius in kilometers
 }

@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Users, Truck, Package, Activity } from 'lucide-react';
+import { Users, Truck, Package, Activity, MapPin } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import InfoCard from '../../components/common/InfoCard';
 import { adminService } from '../../services/adminService';
+import { zoneManagementService } from '../../services/zoneManagementService';
 
 export default function AdminDashboard() {
   const [users,   setUsers]   = useState([]);
   const [drivers, setDrivers] = useState([]);
   const [logs,    setLogs]    = useState([]);
+  const [zones,   setZones]   = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -15,10 +17,12 @@ export default function AdminDashboard() {
       adminService.getUsers(),
       adminService.getDrivers(),
       adminService.getOrderLogs(),
-    ]).then(([u, d, l]) => {
+      zoneManagementService.getAllZones(),
+    ]).then(([u, d, l, z]) => {
       if (u.status === 'fulfilled') setUsers(u.value.data  ?? []);
       if (d.status === 'fulfilled') setDrivers(d.value.data ?? []);
       if (l.status === 'fulfilled') setLogs(l.value.data    ?? []);
+      if (z.status === 'fulfilled') setZones(z.value        ?? []);
     }).finally(() => setLoading(false));
   }, []);
 
@@ -36,6 +40,8 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <InfoCard label="Total Users"    value={users.length}   icon={Users}    accent="blue"   />
         <InfoCard label="Total Drivers"  value={drivers.length} icon={Truck}    accent="sky"    />
+        <InfoCard label="Online Drivers" value={activeDrivers}  icon={Activity} accent="green"  />
+        <InfoCard label="Active Zones"   value={zones.length}   icon={MapPin}   accent="orange" />
         <InfoCard label="Online Drivers" value={onlineDrivers}  icon={Activity} accent="green"  />
         <InfoCard label="Active Orders"  value={activeOrders}   icon={Package}  accent="orange" />
       </div>

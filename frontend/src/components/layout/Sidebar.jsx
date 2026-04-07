@@ -22,6 +22,7 @@ const driverLinks = [
 const adminLinks = [
   { to: '/admin/dashboard',   icon: LayoutDashboard, label: 'Dashboard'   },
   { to: '/admin/warehouses',  icon: Warehouse,       label: 'Warehouses'  },
+  { to: '/admin/zones',       icon: MapPin,          label: 'Zones'       },
   { to: '/admin/users',       icon: Users,           label: 'Users'       },
   { to: '/admin/drivers',     icon: Truck,           label: 'Drivers'     },
   { to: '/admin/batching',    icon: Zap,             label: 'Batching'    },

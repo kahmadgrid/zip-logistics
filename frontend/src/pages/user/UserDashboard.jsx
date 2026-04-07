@@ -7,6 +7,7 @@ import StatusBadge from '../../components/common/StatusBadge';
 import { bookingService } from '../../services/bookingService';
 import { fmtDate } from '../../utils/constants';
 import { useAuth } from '../../context/AuthContext';
+import NotificationBell from '../../components/NotificationBell';
 
 export default function UserDashboard() {
   const { user } = useAuth();
@@ -23,8 +24,8 @@ export default function UserDashboard() {
   const total    = bookings.length;
   const active   = bookings.filter(b => !['DELIVERED', 'CANCELLED'].includes(b.status)).length;
   const delivered = bookings.filter(b => b.status === 'DELIVERED').length;
-//   const recent   = bookings.slice(0, 5);
-    const recent = bookings.filter(b => !['DELIVERED', 'CANCELLED'].includes(b.status)).slice(0, 5);
+  const recent = bookings.filter(b => !['DELIVERED', 'CANCELLED'].includes(b.status)).slice(0, 5);
+
   return (
     <DashboardLayout>
       <div className="page-header flex items-start justify-between">
@@ -32,9 +33,12 @@ export default function UserDashboard() {
           <h1>Welcome back 👋</h1>
           <p>{user?.email}</p>
         </div>
-        <Link to="/user/create-booking" className="btn-primary">
-          <Plus size={16} /> New Booking
-        </Link>
+        <div className="flex items-center gap-3">
+          <NotificationBell />
+          <Link to="/user/create-booking" className="btn-primary">
+            <Plus size={16} /> New Booking
+          </Link>
+        </div>
       </div>
 
       {/* Stats */}

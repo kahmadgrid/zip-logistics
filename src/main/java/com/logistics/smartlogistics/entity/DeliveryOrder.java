@@ -2,6 +2,7 @@ package com.logistics.smartlogistics.entity;
 
 import com.logistics.smartlogistics.enums.DeliveryStatus;
 import com.logistics.smartlogistics.enums.DeliveryType;
+import com.logistics.smartlogistics.enums.VehicleType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -105,4 +106,8 @@ public class DeliveryOrder {
 
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private VehicleType suggestedVehicle;
 }

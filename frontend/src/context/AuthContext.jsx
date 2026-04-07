@@ -33,7 +33,7 @@ useEffect(() => {
   };
 
   const logout = () => {
-    toast.error('Session expired. Please login again.'); // optional
+    toast.error('Logged out successfully'); // optional
     localStorage.clear();
     setToken(null);
     setUser(null);

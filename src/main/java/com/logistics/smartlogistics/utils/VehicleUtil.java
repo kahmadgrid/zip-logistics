@@ -1,5 +1,4 @@
 package com.logistics.smartlogistics.utils;
-
 import com.logistics.smartlogistics.enums.VehicleType;
 public class VehicleUtil {
     public static VehicleType suggestVehicle(

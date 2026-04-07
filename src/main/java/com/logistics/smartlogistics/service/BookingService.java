@@ -3,6 +3,7 @@ package com.logistics.smartlogistics.service;
 import com.logistics.smartlogistics.dto.BookingDtos;
 import com.logistics.smartlogistics.entity.AppUser;
 import com.logistics.smartlogistics.entity.DeliveryOrder;
+import com.logistics.smartlogistics.entity.DriverProfile;
 import com.logistics.smartlogistics.entity.Warehouse;
 import com.logistics.smartlogistics.enums.DeliveryStatus;
 import com.logistics.smartlogistics.enums.DeliveryType;
@@ -156,8 +157,24 @@ public class BookingService {
         DeliveryOrder saved = deliveryOrderRepository.save(order);
 
         // 🚚 Match drivers (now vehicle-aware)
-        matchingEngineService.rankAvailableDrivers(saved);
+        List<DriverProfile> matchedDrivers = matchingEngineService.rankAvailableDrivers(saved);
 
+        System.out.println("📋 Matched " + matchedDrivers.size() + " driver(s) for Order #" + saved.getId());
+
+        for (DriverProfile driver : matchedDrivers) {
+            AppUser driverUser = driver.getUser();
+            System.out.println("🔔 Notifying driver → ID: " + driverUser.getId() + " | Email: " + driverUser.getEmail());
+
+            notificationService.notifyUser(
+                    driverUser.getId(),
+                    String.format("🚚 [Order #%d] New booking available : %s → %s",
+                            saved.getId(),
+                            saved.getPickupAddress(),
+                            saved.getDropAddress())
+            );
+        }
+
+        System.out.println("✅ Notified customer → ID: " + customer.getId() + " | Email: " + customer.getEmail());
         notificationService.notifyUser(
                 customer.getId(),
                 String.format("📦 [Parcel #%d] Your booking has been created", saved.getId())
@@ -169,8 +186,6 @@ public class BookingService {
                 saved.getStatus(),
                 saved.getEstimatedPrice()
         );
-
-
     }
     public List<DeliveryOrder> userOrders(String customerEmail) {
         Long customerId = appUserRepository.findByEmail(customerEmail)

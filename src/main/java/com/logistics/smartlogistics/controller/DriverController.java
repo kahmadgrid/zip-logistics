@@ -245,7 +245,6 @@ public class DriverController {
             @PathVariable Long orderId,
             @RequestBody TrackingDtos.LocationUpdateRequest request,
             Authentication authentication) {
-
         DriverProfile driver = getDriver(authentication);
 
         var saved = trackingService.logLocationForDriver(orderId, request, driver);
